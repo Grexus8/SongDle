@@ -1,0 +1,159 @@
+@url = http://localhost:8080/api
+
+### ------------------------------------------------------------------------
+### 1. AUTENTICACIÓN
+### ------------------------------------------------------------------------
+
+### Registrar un nuevo usuario
+POST {{url}}/auth/register
+Content-Type: application/json
+Accept: application/json
+
+{
+  "name": "Usuario Test",
+  "email": "usuario@test.com",
+  "phone": "600123456",
+  "registration_date": "2026-01-20",
+  "password": "password123"
+}
+
+### Iniciar sesión
+POST {{url}}/auth/login 
+Content-Type: application/json
+Accept: application/json
+
+{
+  "email": "usuario_sin_token@test.com",
+  "password": "password123"
+}
+
+
+### ------------------------------------------------------------------------
+### 2. CATEGORÍAS
+### ------------------------------------------------------------------------
+
+### Crear una categoría
+POST {{url}}/categories/store
+Content-Type: application/json
+Accept: application/json
+
+{
+    "name": "Verdura Ecológica"
+}
+
+### Listar categorías
+GET {{url}}/categories
+Accept: application/json
+
+### ------------------------------------------------------------------------
+### 3. PUNTOS DE ENTREGA
+### ------------------------------------------------------------------------
+
+### Crear un punto de entrega
+POST {{url}}/delivery_points/store
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id_user": 1,
+    "name": "Punto Centro",
+    "direction": "Plaza Mayor 1",
+    "latitude": 39.4699,
+    "length": -0.3763
+}
+
+### ------------------------------------------------------------------------
+### 4. PRODUCTOS
+### ------------------------------------------------------------------------
+
+### CREAR PRODUCTO
+# Importante: Enviamos "id_user" manual porque no hay token
+POST {{url}}/products/store
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id_user": 1,
+    "id_delivery_point": 1,
+    "id_category": 1,
+    "name": "Lechugas Frescas",
+    "description": "Lechugas recién cortadas",
+    "price": 1.20,
+    "stock": 30,
+    "type_stock": "Unidad",
+    "state": "Disponible"
+}
+
+### Listar todos los productos
+GET {{url}}/products
+Accept: application/json
+
+### Ver mis productos
+# Nota: Añadimos ?id_user=1 para que el controlador sepa de quién buscar
+GET {{url}}/products/mine?id_user=1
+Accept: application/json
+
+### Actualizar producto
+PUT {{url}}/products/update/1
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id_user": 1,
+    "name": "Tomates (Precio Actualizado)",
+    "price": 6.00,
+    "state": "Reservado"
+}
+
+### Eliminar producto
+DELETE {{url}}/products/destroy/1
+Accept: application/json
+
+{
+    "id_user": 1
+}
+
+### ------------------------------------------------------------------------
+### 5. VENTAS (Sales)
+### ------------------------------------------------------------------------
+
+### Crear una venta
+POST {{url}}/sales/store
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id_product": 1,
+    "id_buyer": 1,
+    "id_seller": 2,
+    "id_delivery_point": 1,
+    "total": 15.50,
+    "quantity": 2
+}
+
+### Ver mis compras (My Orders)
+GET {{url}}/my-orders?id_user=1
+Accept: application/json
+
+### ------------------------------------------------------------------------
+### 6. REVIEWS
+### ------------------------------------------------------------------------
+
+### Crear una review
+POST {{url}}/reviews/store
+Content-Type: application/json
+Accept: application/json
+
+{
+    "id_sale": 1,
+    "calification": 5,
+    "comment": "Todo perfecto"
+}
+
+### ------------------------------------------------------------------------
+### 7. USUARIOS
+### ------------------------------------------------------------------------
+
+### Listar usuarios
+GET {{url}}/users
+Accept: application/json
