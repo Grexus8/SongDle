@@ -1,6 +1,6 @@
 FROM php:8.4-fpm
 
-# Instalar dependencias
+# 1. Instalar dependencias
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -14,28 +14,35 @@ RUN apt-get update && apt-get install -y \
     $PHPIZE_DEPS \
     && rm -rf /var/lib/apt/lists/*
 
-# Extensiones básicas de PHP
+# 2. Extensiones básicas de PHP
 RUN docker-php-ext-install pdo pdo_mysql xml ctype zip
 
-# Instalar extensión de MongoDB
-RUN pecl install mongodb && docker-php-ext-enable mongodb
+# 3. Instalar extensión de MongoDB (Compilación Manual para evitar errores)
+RUN pecl bundle mongodb \
+    && cd mongodb \
+    && phpize \
+    && ./configure \
+    && make \
+    && make install \
+    && docker-php-ext-enable mongodb \
+    && cd .. && rm -rf mongodb
 
-# Iniciar Xdebug
-RUN docker-php-ext-enable xdebug
+# 4. Iniciar Xdebug (Opcional: descomenta si lo necesitas y añádelo con pecl install xdebug antes)
+# RUN pecl install xdebug && docker-php-ext-enable xdebug
 
-# Instalar Composer
+# 5. Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php \
     -- --install-dir=/usr/local/bin --filename=composer
 
-# Configuración PHP
+# 6. Configuración PHP
 RUN cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini
 
-# Crear un grupo con GID 1000
-RUN groupadd -g 1000 app
-
-# Crear usuario y añadirlo al grupo app
-RUN useradd -u 1000 -g 1000 -m -s /bin/bash app
+# 7. Crear usuario y grupo (CORREGIDO)
+# Usamos -f para forzar éxito si el grupo existe
+# Usamos '|| true' en useradd para ignorar error si el usuario ya existe
+RUN groupadd -f -g 1000 app
+RUN useradd -u 1000 -g app -m -s /bin/bash app || true
 RUN chown -R app:app /var/www/html
 
-# Directorio de trabajo
+# 8. Directorio de trabajo
 WORKDIR /var/www/html
