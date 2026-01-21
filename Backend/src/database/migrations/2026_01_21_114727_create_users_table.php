@@ -18,9 +18,6 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
 
-            $table->unsignedInteger('games_played')->default(0);
-            $table->unsignedInteger('games_won')->default(0);
-
             $table->timestamps();
         });
     }

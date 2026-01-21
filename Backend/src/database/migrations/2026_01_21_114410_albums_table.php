@@ -16,7 +16,7 @@ return new class extends Migration
         $table->string('name');
 
         $table->foreignId('artist_id')
-            ->constrained()
+            ->constrained('artists')
             ->onDelete('cascade');
 
         $table->date('release_date');

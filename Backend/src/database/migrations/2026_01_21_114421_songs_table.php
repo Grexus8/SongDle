@@ -16,7 +16,7 @@ return new class extends Migration
         $table->string('title');
 
         $table->foreignId('artist_id')
-          ->constrained()
+          ->constrained('artists')
           ->onDelete('cascade');
 
         $table->foreignId('album_id')

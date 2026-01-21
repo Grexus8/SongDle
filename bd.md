@@ -5,8 +5,15 @@ Id
 Nickanme
 Email
 Contraseña
-Partidas jugadas
-Partidas ganadas
+
+}
+
+Estadisticas{
+    Id
+    Id_Usuario
+    Partidas jugadas
+    Partidas ganadas
+    Racha
 }
 
 
