@@ -6,28 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
-            Schema::create('estadisticas', function (Blueprint $table) {
-            $table->id(); // Id
-            $table->foreignId('id_usuario')
-                  ->constrained('users')
-                  ->onDelete('cascade'); // Id_Usuario
+        Schema::create('estadisticas', function (Blueprint $table) {
+            $table->id();
             $table->integer('partidas_jugadas')->default(0);
             $table->integer('partidas_ganadas')->default(0);
             $table->integer('racha')->default(0);
-            $table->timestamps();
+            $table->unsignedBigInteger('id_usuario');
+            
+            $table->foreign('id_usuario') ->references('id_usuario')  ->on('users') ->onDelete('cascade');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        //
+        Schema::dropIfExists('estadisticas');
     }
 };
