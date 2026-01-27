@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('email')->unique();
             $table->string('password');
+            $table->boolean('administrador')->default(false);
 
         });
     }
