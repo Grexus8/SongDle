@@ -29,7 +29,6 @@
 </template>
 
 <style scoped>
-/* Fondo negro y texto blanco */
 main {
   background-color: #000;
   color: #fff;
@@ -38,12 +37,11 @@ main {
   padding: 20px;
 }
 
-/* Navbar: título centrado, botón a la derecha */
 nav {
       background-color: #000;
 
   display: flex;
-  justify-content: center; /* centra el título horizontalmente */
+  justify-content: center; 
   align-items: center;
   position: relative;
   margin-bottom: 40px;
@@ -55,7 +53,6 @@ nav {
   margin: 0;
 }
 
-/* Botón de perfil pequeño a la derecha */
 #perfil {
 
   position: absolute;
@@ -69,13 +66,12 @@ nav {
 }
 
 #perfil img {
-  width: 30px; /* tamaño pequeño */
+  width: 30px; 
   height: 30px;
   object-fit: cover;
   border-radius: 50%;
 }
 
-/* Contenedor de juegos */
 #Games_Space {
   display: flex;
   gap: 20px;
@@ -83,7 +79,6 @@ nav {
   flex-wrap: wrap;
 }
 
-/* Clase Games_Select con borde blanco, sombra y borde redondeado */
 .Games_Select {
   background-color: #000;
   border: 2px solid #fff;
@@ -96,14 +91,12 @@ nav {
   text-align: left;
 }
 
-/* Hover efecto */
 .Games_Select:hover {
-  background-color: #111; /* ligero cambio de fondo */
-  box-shadow: 0 0 20px #fff; /* sombra más intensa */
-  transform: scale(1.05); /* pequeño zoom */
+  background-color: #111;
+  box-shadow: 0 0 20px #fff; 
+  transform: scale(1.05); 
 }
 
-/* Texto dentro de Games_Select */
 .Games_Select p {
   margin: 0;
   font-size: 1.2rem;
