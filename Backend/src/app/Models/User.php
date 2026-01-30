@@ -15,14 +15,17 @@ class user extends Model
         'email',
         'password',
         'administrador',
+        'registration_date',
     ];
 
     protected $hidden = [
         'password',
         'administrador',
+        'registration_date',
     ];
     protected $casts = [
         'administrador' => 'boolean',
+        'registration_date' => 'date'
     ];
 
     public function estadistica()
