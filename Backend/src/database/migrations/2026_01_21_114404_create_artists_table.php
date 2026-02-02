@@ -15,6 +15,7 @@ return new class extends Migration
         $table->id('id_artista');
         $table->string('nombre');
         $table->string('pais');
+        $table->enum('genero', ['hombre', 'mujer']);
         $table->year('debut');
         $table->integer('cantidad_albumes')->default(0);
         $table->integer('premios')->default(0);

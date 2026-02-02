@@ -30,10 +30,11 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'pais' => 'required|string|max:255',
-            'debut' => 'required|integer',
-            'cantidad_albumes' => 'required|integer',
-            'premios' => 'required|integer',
-            'oyentes_mensuales' => 'required|integer',
+            'genero' => 'required|in:hombre,mujer',
+            'debut' => 'required|integer|min:1900|max:' . date('Y'),
+            'cantidad_albumes' => 'required|integer|min:0',
+            'premios' => 'nullable|string|max:255',
+            'oyentes_mensuales' => 'required|integer|min:0',
         ]);
 
         $artist = Artist::create($validated);
@@ -52,10 +53,11 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'nombre' => 'sometimes|string|max:255',
             'pais' => 'sometimes|string|max:255',
-            'debut' => 'sometimes|integer',
-            'cantidad_albumes' => 'sometimes|integer',
-            'premios' => 'sometimes|integer',
-            'oyentes_mensuales' => 'sometimes|integer',
+            'genero' => 'sometimes|in:hombre,mujer',
+            'debut' => 'sometimes|integer|min:1900|max:' . date('Y'),
+            'cantidad_albumes' => 'sometimes|integer|min:0',
+            'premios' => 'nullable|string|max:255',
+            'oyentes_mensuales' => 'sometimes|integer|min:0',
         ]);
 
         $artist->update($validated);
