@@ -18,7 +18,7 @@ return new class extends Migration
         $table->enum('genero', ['hombre', 'mujer']);
         $table->year('debut');
         $table->integer('cantidad_albumes')->default(0);
-        $table->integer('premios')->default(0);
+        $table->text('premios');
         $table->bigInteger('oyentes_mensuales')->default(0);
     });
 }

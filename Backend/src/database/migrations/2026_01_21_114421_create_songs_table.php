@@ -18,9 +18,10 @@ public function up(): void
         $table->string('pais');
         $table->year('anio');
         $table->string('genero');
+        $table->date('registration_date');
         $table->bigInteger('reproducciones')->default(0);
         $table->unsignedBigInteger('id_artista');
-        $table->unsignedBigInteger('id_album');
+        $table->unsignedBigInteger('id_album')->nullable();
         
         
         $table->foreign('id_artista')->references('id_artista')->on('artists')->onDelete('cascade');
