@@ -12,11 +12,13 @@ class Artist extends Model
     protected $fillable = [
         'nombre',
         'pais',
+        'genero',
         'debut',
         'cantidad_albumes',
         'premios',
         'oyentes_mensuales',
     ];
+
 
     public function albums()
     {

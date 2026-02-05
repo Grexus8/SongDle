@@ -14,3 +14,13 @@ Route::prefix('auth')->name('auth.')->group(function (){
 
 //Route Artista
 Route::apiResource('artists', ArtistController::class);
+
+//Route Album
+Route::apiResource('albums', AlbumController::class);
+
+//Route Song
+Route::apiResource('songs', SongController::class);
+
+//Route Estadisticas
+Route::apiResource('estadisticas', EstadisticaController::class);
+
