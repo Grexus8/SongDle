@@ -1,104 +1,116 @@
 <template>
-    <main>
-        <nav>
-            <h1 id="titulo">SongDle</h1>
-            <button id="perfil">
-                <img src="../img/user_icon.png" alt="Usuario">
-            </button>
-        </nav>
+  <div class="app-container">
+    <div class="top-bar">
+      <h1 class="game-title">SongDle</h1>
+      <button class="profile-btn">
+        <img src="../img/user_icon.png" alt="Usuario">
+      </button>
+    </div>
 
-        <div id="Games_Space">
-            <div class="Games_Select">
-                <p>Cancion</p>
-            </div>
+    <div class="menu-area">
+      <router-link to="/cancion"><div class="menu-card">
+        <p>Canción</p>
+      </div> </router-link>
 
-            <div class="Games_Select">
-                <p>Artista</p>
-            </div>
+      <router-link to="/Artista"><div class="menu-card">
+        <p>Artista</p>
+      </div></router-link>
 
-            <div class="Games_Select">
-                <p>Album</p>
-            </div>
-
-            
-
-        </div>
-    </main>
-
-
+      <router-link to="/album"><div class="menu-card">
+        <p>Álbum</p>
+      </div></router-link>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-main {
-  background-color: #000;
+* {
+  box-sizing: border-box;
+  text-decoration: none;
+  color:#fff
+}
+
+.app-container {
+  background: linear-gradient(135deg, #121212 0%, #1e2530 100%);
   color: #fff;
   min-height: 100vh;
-  font-family: Arial, sans-serif;
-  padding: 20px;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
-nav {
-      background-color: #000;
-
+.top-bar {
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: center;
   position: relative;
-  margin-bottom: 40px;
+  padding: 30px 20px;
+  background: transparent;
 }
 
-#titulo {
-  font-size: 2rem;
-  text-align: center;
+.game-title {
+  font-size: 2.5rem;
+  font-weight: 700;
   margin: 0;
+  text-shadow: 0 4px 10px rgba(0,0,0,0.5);
 }
 
-#perfil {
-
+.profile-btn {
   position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  right: 20px;
   background: none;
   border: none;
   cursor: pointer;
-  padding: 5px;
+  transition: transform 0.2s;
 }
 
-#perfil img {
-  width: 30px; 
-  height: 30px;
-  object-fit: cover;
+.profile-btn:hover {
+  transform: scale(1.1);
+}
+
+.profile-btn img {
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.3);
 }
 
-#Games_Space {
+.menu-area {
+  flex-grow: 1;
   display: flex;
-  gap: 20px;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  gap: 25px;
+  padding-bottom: 50px;
 }
 
-.Games_Select {
-  background-color: #000;
-  border: 2px solid #fff;
+a {
+  background-color: #2c3e50;
+  width: 90%;
+  max-width: 400px;
+  padding: 25px;
   border-radius: 15px;
-  box-shadow: 0 0 10px #fff;
-  padding: 30px 50px;
-  width: 80%;
+  text-align: center;
   cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.05);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
   transition: all 0.3s ease;
-  text-align: left;
 }
 
-.Games_Select:hover {
-  background-color: #111;
-  box-shadow: 0 0 20px #fff; 
-  transform: scale(1.05); 
+a:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
 }
 
-.Games_Select p {
+.menu-card p {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: 1px;
 }
 </style>
