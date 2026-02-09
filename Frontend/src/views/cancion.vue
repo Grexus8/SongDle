@@ -71,10 +71,10 @@ const seleccionar = (cancion) => {
 
             <div 
                 class="caja-dato"
-                :class="cancionSeleccionada.id_artista === cancionSecreta.id_artista ? 'acierto' : 'fallo'"
+                :class="cancionSeleccionada.nombre === cancionSecreta.nombre ? 'acierto' : 'fallo'"
             >
                 <small>Artista</small><br>
-                {{ cancionSeleccionada.artist?.nombre || '?' }}
+                {{ cancionSeleccionada.id_artista }}
             </div>
 
             <div 
