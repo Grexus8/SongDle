@@ -12,8 +12,9 @@ class SongController extends Controller
      */
     public function index()
     {
-        $song = Song::all();
-        return response()-> json($song);    
+        // Eliminamos la duplicidad y dejamos la versión que carga el artista
+        $songs = Song::with('artist')->get();
+        return response()->json($songs);
     }
 
     /**

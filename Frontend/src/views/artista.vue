@@ -249,7 +249,7 @@ h1 {
 }
 
 .fallo {
-    background-color: #787c7e; /* Gris Wordle */
+    background-color: #FF7F7F; /* Rojo Wordle */
 }
 
 .masomenos {

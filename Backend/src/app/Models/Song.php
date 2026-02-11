@@ -30,4 +30,6 @@ class Song extends Model
     {
         return $this->belongsTo(Album::class, 'id_album', 'id_album');
     }
+
+    
 }
