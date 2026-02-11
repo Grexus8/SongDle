@@ -17,7 +17,7 @@ return new class extends Migration
         $table->date('fecha_lanzamiento');
         $table->integer('cantidad_canciones');
         $table->boolean('colaboraciones')->default(false);
-        $table->integer('premios')->default(0);
+        $table->string('premios')->nullable();
         $table->bigInteger('reproducciones')->default(0);
         $table->unsignedBigInteger('id_artista');
         $table->foreign('id_artista') ->references('id_artista') ->on('artists') ->onDelete('cascade');
