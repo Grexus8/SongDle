@@ -10,10 +10,14 @@ class SongController extends Controller
     /**
      * Listar canciones
      */
-    public function index()
+    public function index(Request $request)
     {
         // Eliminamos la duplicidad y dejamos la versión que carga el artista
-        $songs = Song::with('artist')->get();
+        $songs = Song::with('artist', 'album');
+
+        if($request->filled('id_artista')) {
+            $songs->where('id_artista', $request->id_artista);
+        }
         return response()->json($songs);
     }
 

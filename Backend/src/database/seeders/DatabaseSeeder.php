@@ -15,8 +15,8 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Ejecutar otros archivos de Seeder específicos
         $this->call([
-            AlbumSeeder::class,
             ArtistSeeder::class,
+            AlbumSeeder::class,
             SongSeeder::class
         ]);
     }
