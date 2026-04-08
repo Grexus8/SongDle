@@ -6,7 +6,6 @@ const busqueda = ref("");
 const listarArtistas = ref([]);
 const artistSecreto = ref(null);
 
-// Historial de intentos
 const intentos = ref([]);
 
 onMounted(async () => {
@@ -17,7 +16,7 @@ onMounted(async () => {
         const aleatorio = Math.floor(Math.random() * listarArtistas.value.length);
         artistSecreto.value = listarArtistas.value[aleatorio];
         
-        console.log("El artista secreto es:", artistSecreto.value.nombre);
+        console.log("🤫 El artista secreto es:", artistSecreto.value.nombre);
     } catch (error) {
         console.error("Error cargando artistas:", error);
     }
@@ -26,31 +25,23 @@ onMounted(async () => {
 const artistasFiltrados = computed(() => {
     if (busqueda.value === "") return []; 
     return listarArtistas.value.filter(artista => {
-        // Evitamos que aparezcan en el buscador artistas que ya intentamos
         const yaIntentado = intentos.value.some(i => i.id_artista === artista.id_artista);
         return artista.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) && !yaIntentado;
     });
 });
 
 const seleccionar = (artista) => {
-    // Añadimos el artista al principio de la lista de intentos
     intentos.value.unshift(artista);
     busqueda.value = "";
-
-    
 }
 
 const obtenerClasePremios = (intentoPremios, secretoPremios) => {
     if (!intentoPremios || !secretoPremios) return 'fallo';
-    
-    // Si son exactamente iguales (o el mismo array)
     if (intentoPremios === secretoPremios) return 'acierto';
 
-    // Convertimos a array si vienen como string separados por comas
     const arrayIntento = String(intentoPremios).split(',').map(p => p.trim().toLowerCase());
     const arraySecreto = String(secretoPremios).split(',').map(p => p.trim().toLowerCase());
 
-    // Buscamos si hay al menos un elemento en común
     const coincidencias = arrayIntento.filter(premio => arraySecreto.includes(premio));
 
     if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
@@ -61,12 +52,11 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
         return 'fallo';
     }
 }
-
 </script>
 
 <template>
     <div class="contenedor-juego">
-        <h1>SongDle</h1><br>
+        <h1>SongDle - Artista</h1><br>
         
         <div class="buscador-wrapper">
             <input 
@@ -113,22 +103,34 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
                 <div class="caja-dato" :class="intento.debut === artistSecreto.debut ? 'acierto' : 'fallo'">
                     <small>Debut</small><br>
                     {{ intento.debut }}
-                    <span v-if="intento.debut < artistSecreto.debut" class="flecha">⬆️</span>
-                    <span v-else-if="intento.debut > artistSecreto.debut" class="flecha">⬇️</span>
+                    <span v-if="intento.debut < artistSecreto.debut" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                    </span>
+                    <span v-else-if="intento.debut > artistSecreto.debut" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.cantidad_albumes === artistSecreto.cantidad_albumes ? 'acierto' : 'fallo'">
                     <small>Álbumes</small><br>
                     {{ intento.cantidad_albumes }}
-                    <span v-if="intento.cantidad_albumes < artistSecreto.cantidad_albumes" class="flecha">⬆️</span>
-                    <span v-else-if="intento.cantidad_albumes > artistSecreto.cantidad_albumes" class="flecha">⬇️</span>
+                    <span v-if="intento.cantidad_albumes < artistSecreto.cantidad_albumes" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                    </span>
+                    <span v-else-if="intento.cantidad_albumes > artistSecreto.cantidad_albumes" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.oyentes_mensuales === artistSecreto.oyentes_mensuales ? 'acierto' : 'fallo'">
                     <small>Oyentes</small><br>
                     {{ intento.oyentes_mensuales }}
-                    <span v-if="intento.oyentes_mensuales < artistSecreto.oyentes_mensuales" class="flecha">⬆️</span>
-                    <span v-else-if="intento.oyentes_mensuales > artistSecreto.oyentes_mensuales" class="flecha">⬇️</span>
+                    <span v-if="intento.oyentes_mensuales < artistSecreto.oyentes_mensuales" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                    </span>
+                    <span v-else-if="intento.oyentes_mensuales > artistSecreto.oyentes_mensuales" class="flecha">
+                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    </span>
                 </div>
 
                 <div class="caja-dato" :class="obtenerClasePremios(intento.premios, artistSecreto.premios)">
@@ -142,129 +144,184 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
 </template>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Montserrat:wght@400;500;600;700&display=swap');
+
 .contenedor-juego {
-    max-width: 800px;
-    margin: 20px auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    padding: 20px;
+    font-family: 'Montserrat', sans-serif;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #141824 0%, #0a0c13 100%);
+    color: #f1f5f9;
+    padding: 40px 20px;
 }
 
 h1 {
     text-align: center;
-    color: #333;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+    font-family: 'Dela Gothic One', cursive;
+    font-size: 3rem;
+    margin-bottom: 10px;
+    background: linear-gradient(to right, #ffffff, #d8b4fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 20px rgba(171, 71, 188, 0.3);
+    letter-spacing: normal;
 }
 
 .buscador-wrapper {
     position: relative;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .input-buscador {
     width: 100%;
-    padding: 12px;
-    font-size: 18px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
+    background-color: #0b0d14;
+    color: #f8fafc;
+    border: 1px solid #334155;
+    padding: 1.2rem;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1.1rem;
     outline: none;
-    transition: border-color 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
 }
 
 .input-buscador:focus {
-    border-color: #4CAF50;
+    border-color: #ec4899;
+    box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15), 0 10px 25px rgba(0,0,0,0.5);
 }
+
+.input-buscador::placeholder { color: #64748b; }
 
 .lista-resultados {
     position: absolute;
-    top: 100%;
+    top: calc(100% + 8px);
     left: 0;
     right: 0;
-    background: white;
-    border: 1px solid #ccc;
-    border-top: none;
+    background-color: #11141d;
+    border: 1px solid #ec4899;
+    border-radius: 12px;
     z-index: 100;
     list-style: none;
     padding: 0;
     margin: 0;
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6);
 }
 
 .item-lista {
-    padding: 12px;
+    padding: 1rem 1.2rem;
+    color: #cbd5e1;
     cursor: pointer;
-    border-bottom: 1px solid #eee;
-    color: #333;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background-color 0.2s, color 0.2s;
+    font-weight: 500;
 }
+.item-lista:last-child { border-bottom: none; }
+.item-lista:hover { background-color: #1a1f2e; color: #ffffff; }
 
-.item-lista:hover {
-    background-color: #f9f9f9;
+.lista-resultados::-webkit-scrollbar { width: 8px; }
+.lista-resultados::-webkit-scrollbar-track { background: #0b0d14; border-radius: 0 12px 12px 0; }
+.lista-resultados::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.lista-resultados::-webkit-scrollbar-thumb:hover { background: #ec4899; }
+
+.no-results {
+    text-align: center;
+    color: #ec4899;
+    font-style: italic;
+    font-weight: 500;
+    margin-top: -20px;
+    margin-bottom: 30px;
 }
 
 .historial-intentos {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .fila-comparacion {
     display: flex;
-    gap: 8px;
-    animation: fadeIn 0.4s ease-out;
+    gap: 10px;
+    animation: fadeUp 0.4s ease-out forwards;
 }
 
 .caja-dato {
     flex: 1;
-    padding: 12px 5px;
-    border-radius: 6px;
+    padding: 15px 8px;
+    border-radius: 10px;
     text-align: center;
-    color: white;
-    font-weight: bold;
+    color: #f1f5f9;
+    font-weight: 600;
     font-size: 0.9em;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    min-height: 60px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-height: 85px;
+    background-color: #11141d;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    word-break: break-word;
+    transition: transform 0.2s ease;
 }
 
+.caja-dato:hover { transform: translateY(-2px); }
+
 .caja-dato small {
-    font-weight: normal;
+    font-weight: 600;
     font-size: 0.7em;
     text-transform: uppercase;
-    margin-bottom: 4px;
-    opacity: 0.9;
+    margin-bottom: 8px;
+    color: #94a3b8;
+    letter-spacing: 1px;
 }
 
 .flecha {
-    margin-top: 4px;
-    font-size: 1.1em;
+    display: inline-block;
+    margin-top: 6px;
+    margin-left: 4px;
+    vertical-align: middle;
 }
 
-.acierto {
-    background-color: #6aaa64; /* Verde Wordle */
+.icono-flecha {
+    width: 18px;
+    height: 18px;
+    stroke: currentColor; 
+    transition: transform 0.2s;
 }
 
-.fallo {
-    background-color: #FF7F7F; /* Rojo Wordle */
+.acierto { 
+    background-color: rgba(34, 197, 94, 0.1); 
+    border: 1px solid rgba(34, 197, 94, 0.4); 
+    color: #4ade80; 
+    box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.05);
 }
 
-.masomenos {
-    background-color: #c9b458; /* Amarillo estilo Wordle */
-    color: white; /* O black, si prefieres más contraste */
+.fallo { 
+    background-color: rgba(239, 68, 68, 0.05); 
+    border: 1px solid rgba(239, 68, 68, 0.2); 
+    color: #f87171; 
 }
 
-.no-results {
-    text-align: center;
-    color: #888;
-    font-style: italic;
+.masomenos { 
+    background-color: rgba(234, 179, 8, 0.1); 
+    border: 1px solid rgba(234, 179, 8, 0.4); 
+    color: #facc15; 
+    box-shadow: inset 0 0 15px rgba(234, 179, 8, 0.05);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
+.acierto small { color: rgba(74, 222, 128, 0.8); }
+.fallo small { color: rgba(248, 113, 113, 0.8); }
+.masomenos small { color: rgba(250, 204, 21, 0.8); }
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
 </style>
