@@ -12,12 +12,17 @@ class SongController extends Controller
      */
     public function index(Request $request)
     {
-        // Eliminamos la duplicidad y dejamos la versión que carga el artista
-        $songs = Song::with('artist', 'album');
+        // Creamos la consulta base
+        $query = Song::with('artist', 'album');
 
+        // Aplicamos el filtro si existe
         if($request->filled('id_artista')) {
-            $songs->where('id_artista', $request->id_artista);
+            $query->where('id_artista', $request->id_artista);
         }
+        
+        // ¡AQUÍ ESTÁ LA MAGIA! Usamos ->get() para ejecutar la consulta
+        $songs = $query->get();
+
         return response()->json($songs);
     }
 

@@ -10,9 +10,18 @@ class AlbumController extends Controller
     /**
      * Mostrar listado de álbumes
      */
-    public function index()
+    public function index(Request $request)
     {
-        return Album::with(['artist', 'songs'])->get();
+        // 1. Preparamos la consulta base (traer álbumes con sus relaciones)
+        $query = Album::with(['artist', 'songs']);
+
+        // 2. Si la URL trae un '?id_artista=', aplicamos el filtro
+        if ($request->filled('id_artista')) {
+            $query->where('id_artista', $request->id_artista);
+        }
+
+        // 3. Ejecutamos la consulta con ->get() y devolvemos el JSON
+        return response()->json($query->get());
     }
 
     /**

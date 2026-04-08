@@ -12,7 +12,7 @@ const routes = [
     component: IndexView
   },
   {
-    path: '/cancion',          
+    path: '/cancion/:id?',          
     name: 'cancion',
     component: cancion
   },
@@ -22,7 +22,7 @@ const routes = [
     component: artista
   },
   {
-    path: '/album',          
+    path: '/album/:id?',          
     name: 'album',
     component: album
   },
