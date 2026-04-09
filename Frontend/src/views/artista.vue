@@ -24,9 +24,20 @@ onMounted(async () => {
 
 const artistasFiltrados = computed(() => {
     if (busqueda.value === "") return []; 
+
+    const buscar = busqueda.value.toLowerCase();
+
     return listarArtistas.value.filter(artista => {
+        // Evitamos que aparezcan en el buscador artistas que ya intentamos
         const yaIntentado = intentos.value.some(i => i.id_artista === artista.id_artista);
-        return artista.nombre.toLowerCase().includes(busqueda.value.toLowerCase()) && !yaIntentado;
+        
+        // Separamos el nombre del artista en una lista de palabras
+        const palabras = artista.nombre.toLowerCase().split(' ');
+        
+        // Comprobamos si ALGUNA de esas palabras EMPIEZA con lo que se ha escrito
+        const coincide = palabras.some(palabra => palabra.startsWith(buscar));
+
+        return coincide && !yaIntentado;
     });
 });
 

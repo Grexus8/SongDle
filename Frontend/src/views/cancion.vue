@@ -31,9 +31,20 @@ onMounted(async () => {
 
 const cancionesFiltradas = computed(() => {
     if (busqueda.value === "") return []; 
+
+    const buscar = busqueda.value.toLowerCase();
+
     return listarCanciones.value.filter(cancion => {
+        // Evitamos que aparezcan en el buscador canciones que ya intentamos
         const yaIntentado = intentos.value.some(i => i.id_song === cancion.id_song);
-        return cancion.titulo.toLowerCase().includes(busqueda.value.toLowerCase()) && !yaIntentado;
+        
+        // Separamos el título de la canción en una lista de palabras
+        const palabras = cancion.titulo.toLowerCase().split(' ');
+        
+        // Comprobamos si ALGUNA de esas palabras EMPIEZA con lo que se ha escrito
+        const coincide = palabras.some(palabra => palabra.startsWith(buscar));
+
+        return coincide && !yaIntentado;
     });
 });
 
