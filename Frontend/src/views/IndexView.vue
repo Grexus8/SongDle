@@ -55,16 +55,19 @@ onMounted(() => {
   <div class="app-container">
     <header class="header">
       <div class="header-left">
-        <div class="icon-group">
+        <div class="icon-group group-ranking">
           <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="16" y1="2" x2="16" y2="6"></line>
-            <line x1="8" y1="2" x2="8" y2="6"></line>
-            <line x1="3" y1="10" x2="21" y2="10"></line>
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+            <path d="M4 22h16"></path>
+            <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
           </svg>
-          <span class="icon-text">DIARIO</span>
+          <span class="icon-text">RANKING</span>
         </div>
-        <div class="icon-group">
+        
+        <div class="icon-group group-stats">
           <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="18" y1="20" x2="18" y2="10"></line>
             <line x1="12" y1="20" x2="12" y2="4"></line>
@@ -235,7 +238,6 @@ onMounted(() => {
   padding: 0;
 }
 
-/* --- Fondo Base --- */
 .app-container {
   font-family: 'Montserrat', sans-serif;
   min-height: 100vh;
@@ -246,7 +248,6 @@ onMounted(() => {
   color: #f1f5f9;
 }
 
-/* --- Encabezado --- */
 .header {
   display: flex;
   justify-content: space-between;
@@ -260,7 +261,7 @@ onMounted(() => {
 .header-left, .header-right { flex: 1; }
 .header-left { display: flex; gap: 1rem; }
 
-/* NUEVOS ESTILOS PARA LOS ICONOS (Reemplazo de los emojis) */
+/* NUEVOS ESTILOS PARA LOS ICONOS SUPERIORES */
 .icon-group {
   display: flex;
   align-items: center;
@@ -276,7 +277,7 @@ onMounted(() => {
 
 .icon-group:hover { 
   color: #ffffff; 
-  background-color: rgba(255, 255, 255, 0.05); /* Efecto pastilla al pasar el ratón */
+  background-color: rgba(255, 255, 255, 0.05); 
 }
 
 .nav-icon {
@@ -286,14 +287,20 @@ onMounted(() => {
   transition: all 0.3s ease;
 }
 
-.icon-group:hover .nav-icon {
+/* Efecto dorado/amarillo sutil para el Trofeo */
+.group-ranking:hover .nav-icon {
   opacity: 1;
-  color: #d8b4fe; /* Toque morado sutil en el icono al hacer hover */
+  color: #fbbf24; 
+}
+
+/* Efecto morado/rosa para las Estadísticas */
+.group-stats:hover .nav-icon {
+  opacity: 1;
+  color: #d8b4fe; 
 }
 
 .header-center { flex: 2; text-align: center; }
 
-/* --- Logo --- */
 .logo {
   font-family: 'Dela Gothic One', cursive;
   font-size: 2.8rem;
@@ -329,7 +336,6 @@ onMounted(() => {
 }
 .avatar-circle:hover { border-color: #8b5cf6; }
 
-/* --- Main --- */
 .main-content {
   flex: 1;
   display: flex;
@@ -338,7 +344,6 @@ onMounted(() => {
   padding: 2rem;
 }
 
-/* --- Tarjeta de Configuración --- */
 .config-card {
   width: 100%;
   max-width: 800px; 
@@ -351,7 +356,6 @@ onMounted(() => {
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
 }
 
-/* --- Pestañas --- */
 .tabs-container {
   display: flex;
   width: 100%;
@@ -379,7 +383,6 @@ onMounted(() => {
 
 .tab-btn:hover { color: #f1f5f9; background-color: rgba(255, 255, 255, 0.02); }
 
-/* Indicador de Pestaña Activa */
 .tab-btn.active {
   color: #ffffff;
   background-color: #151923;
@@ -395,7 +398,6 @@ onMounted(() => {
   box-shadow: 0 -2px 10px rgba(236, 72, 153, 0.4);
 }
 
-/* --- Contenido de la Tarjeta --- */
 .card-content {
   padding: 4rem 3rem;
   min-height: 380px; 
@@ -420,7 +422,6 @@ onMounted(() => {
   letter-spacing: 1px;
 }
 
-/* --- Layout de Modos --- */
 .modes-layout {
   display: flex;
   gap: 2rem;
@@ -436,7 +437,6 @@ onMounted(() => {
   gap: 1.2rem;
 }
 
-/* --- Botones de Modo (Outline) --- */
 .mode-btn-outline {
   background-color: rgba(255, 255, 255, 0.02);
   border: 1px solid #334155;
@@ -457,7 +457,6 @@ onMounted(() => {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Modo Seleccionado */
 .mode-btn-outline.selected {
   border-color: #a855f7;
   color: #ffffff;
@@ -465,9 +464,6 @@ onMounted(() => {
   box-shadow: inset 0 0 15px rgba(168, 85, 247, 0.15);
 }
 
-/* ====================================================
-   NUEVO DESPLEGABLE CUSTOMIZADO E IMPRESIONANTE
-   ==================================================== */
 .dropdown-wrapper {
   position: relative;
   width: 100%;
@@ -488,7 +484,6 @@ onMounted(() => {
   align-items: center;
 }
 
-/* Flechita animada que dibujamos con CSS */
 .custom-select-dark::after {
   content: '▼';
   font-size: 0.8rem;
@@ -497,7 +492,7 @@ onMounted(() => {
 }
 
 .custom-select-dark.is-open {
-  border-color: #ec4899; /* Rosa neón */
+  border-color: #ec4899; 
   box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
@@ -507,7 +502,6 @@ onMounted(() => {
   transform: rotate(180deg);
 }
 
-/* La lista mágica que reemplaza a tu caja blanca */
 .custom-options-list {
   position: absolute;
   top: 100%;
@@ -553,7 +547,6 @@ onMounted(() => {
   color: #64748b !important;
 }
 
-/* ¡SCROLLBAR PERSONALIZADA! */
 .custom-options-list::-webkit-scrollbar {
   width: 8px;
 }
@@ -567,9 +560,7 @@ onMounted(() => {
 .custom-options-list::-webkit-scrollbar-thumb:hover {
   background: #ec4899; 
 }
-/* ==================================================== */
 
-/* --- Botón Jugar --- */
 .play-wrapper, .single-mode-wrapper {
     width: 100%;
     display: flex;
@@ -612,7 +603,6 @@ onMounted(() => {
     text-decoration: none;
 }
 
-/* Animación de entrada suave */
 .step-animation {
   animation: fadeUp 0.4s ease-out;
 }

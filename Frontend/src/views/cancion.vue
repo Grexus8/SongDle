@@ -35,13 +35,8 @@ const cancionesFiltradas = computed(() => {
     const buscar = busqueda.value.toLowerCase();
 
     return listarCanciones.value.filter(cancion => {
-        // Evitamos que aparezcan en el buscador canciones que ya intentamos
         const yaIntentado = intentos.value.some(i => i.id_song === cancion.id_song);
-        
-        // Separamos el título de la canción en una lista de palabras
         const palabras = cancion.titulo.toLowerCase().split(' ');
-        
-        // Comprobamos si ALGUNA de esas palabras EMPIEZA con lo que se ha escrito
         const coincide = palabras.some(palabra => palabra.startsWith(buscar));
 
         return coincide && !yaIntentado;
@@ -74,6 +69,14 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
 
 <template>
     <div class="contenedor-juego">
+        
+        <RouterLink to="/" class="btn-volver" title="Volver al inicio">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </RouterLink>
+
         <h1>SongDle - Canciones</h1><br>
         
         <div class="buscador-wrapper">
@@ -159,6 +162,35 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
     background: radial-gradient(circle at top, #141824 0%, #0a0c13 100%);
     color: #f1f5f9;
     padding: 40px 20px;
+    position: relative; /* Necesario para posicionar el botón de volver */
+}
+
+/* --- Botón Volver Rediseñado --- */
+.btn-volver {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    width: 50px;
+    height: 50px;
+    background-color: #11141d;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+.btn-volver:hover {
+    color: #ffffff;
+    border-color: #ec4899;
+    background-color: #1a1e29;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+    transform: translateX(-3px);
 }
 
 h1 {

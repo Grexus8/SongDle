@@ -28,13 +28,10 @@ const artistasFiltrados = computed(() => {
     const buscar = busqueda.value.toLowerCase();
 
     return listarArtistas.value.filter(artista => {
-        // Evitamos que aparezcan en el buscador artistas que ya intentamos
         const yaIntentado = intentos.value.some(i => i.id_artista === artista.id_artista);
         
-        // Separamos el nombre del artista en una lista de palabras
+        // Buscador inteligente por inicio de palabras
         const palabras = artista.nombre.toLowerCase().split(' ');
-        
-        // Comprobamos si ALGUNA de esas palabras EMPIEZA con lo que se ha escrito
         const coincide = palabras.some(palabra => palabra.startsWith(buscar));
 
         return coincide && !yaIntentado;
@@ -67,6 +64,14 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
 
 <template>
     <div class="contenedor-juego">
+        
+        <RouterLink to="/" class="btn-volver" title="Volver a Inicio">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </RouterLink>
+
         <h1>SongDle - Artista</h1><br>
         
         <div class="buscador-wrapper">
@@ -163,6 +168,34 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
     background: radial-gradient(circle at top, #141824 0%, #0a0c13 100%);
     color: #f1f5f9;
     padding: 40px 20px;
+    position: relative;
+}
+
+.btn-volver {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    width: 50px;
+    height: 50px;
+    background-color: #11141d;
+    border: 1px solid #334155;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 10;
+}
+
+.btn-volver:hover {
+    color: #ffffff;
+    border-color: #ec4899;
+    background-color: #1a1e29;
+    box-shadow: 0 0 15px rgba(236, 72, 153, 0.4);
+    transform: translateX(-3px);
 }
 
 h1 {
@@ -174,7 +207,6 @@ h1 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 4px 20px rgba(171, 71, 188, 0.3);
-    letter-spacing: normal;
 }
 
 .buscador-wrapper {
@@ -231,11 +263,9 @@ h1 {
     transition: background-color 0.2s, color 0.2s;
     font-weight: 500;
 }
-.item-lista:last-child { border-bottom: none; }
 .item-lista:hover { background-color: #1a1f2e; color: #ffffff; }
 
 .lista-resultados::-webkit-scrollbar { width: 8px; }
-.lista-resultados::-webkit-scrollbar-track { background: #0b0d14; border-radius: 0 12px 12px 0; }
 .lista-resultados::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 .lista-resultados::-webkit-scrollbar-thumb:hover { background: #ec4899; }
 
@@ -243,7 +273,6 @@ h1 {
     text-align: center;
     color: #ec4899;
     font-style: italic;
-    font-weight: 500;
     margin-top: -20px;
     margin-bottom: 30px;
 }
@@ -277,12 +306,7 @@ h1 {
     min-height: 85px;
     background-color: #11141d;
     border: 1px solid #334155;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    word-break: break-word;
-    transition: transform 0.2s ease;
 }
-
-.caja-dato:hover { transform: translateY(-2px); }
 
 .caja-dato small {
     font-weight: 600;
@@ -304,32 +328,11 @@ h1 {
     width: 18px;
     height: 18px;
     stroke: currentColor; 
-    transition: transform 0.2s;
 }
 
-.acierto { 
-    background-color: rgba(34, 197, 94, 0.1); 
-    border: 1px solid rgba(34, 197, 94, 0.4); 
-    color: #4ade80; 
-    box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.05);
-}
-
-.fallo { 
-    background-color: rgba(239, 68, 68, 0.05); 
-    border: 1px solid rgba(239, 68, 68, 0.2); 
-    color: #f87171; 
-}
-
-.masomenos { 
-    background-color: rgba(234, 179, 8, 0.1); 
-    border: 1px solid rgba(234, 179, 8, 0.4); 
-    color: #facc15; 
-    box-shadow: inset 0 0 15px rgba(234, 179, 8, 0.05);
-}
-
-.acierto small { color: rgba(74, 222, 128, 0.8); }
-.fallo small { color: rgba(248, 113, 113, 0.8); }
-.masomenos small { color: rgba(250, 204, 21, 0.8); }
+.acierto { background-color: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; }
+.fallo { background-color: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; }
+.masomenos { background-color: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.4); color: #facc15; }
 
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(15px); }
