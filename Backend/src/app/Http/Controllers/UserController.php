@@ -11,11 +11,7 @@ use Illuminate\Support\Arr;
 
 class UserController extends Controller
 {
-    /**
-     * Función para obtener todos los usuarios
-     *
-     * @return json
-     */
+
     public function index()
     {
         // Obtenemos todos los usuarios de la base de datos
@@ -25,12 +21,6 @@ class UserController extends Controller
         return response()->json($users);
     }
 
-    /**
-     * Función para obtener un usuario
-     *
-     * @param Request $request
-     * @return json
-     */
     public function show(Request $request)
     {
         // Obtenemos un usuario por id
@@ -45,13 +35,6 @@ class UserController extends Controller
         return response()->json($user);
     }
 
-    /**
-     * Función para actualizar un usuario
-     *
-     * @param Request $request
-     * @param numeric $id
-     * @return json
-     */
     public function update(Request $request, $id)
     {
         // Obtenemos el usuario por id
@@ -83,12 +66,6 @@ class UserController extends Controller
         ], 200);
     }
 
-    /**
-     * Función para eliminar un usuario por su id
-     *
-     * @param numeric $id
-     * @return json
-     */
     public function destroy($id)
     {
         // Obtenemos el usuario por id
@@ -111,12 +88,6 @@ class UserController extends Controller
         return response()->json(['message' => 'Usuari i perfil eliminats correctament'],200);
     }
 
-    /**
-     * Función para obtener la pantalla de perfil
-     *
-     * @param Request $request
-     * @return json
-     */
     public function myProfile(Request $request)
     {
         // Obtenemos el usuario
@@ -139,12 +110,6 @@ class UserController extends Controller
         ], 200);
     }
 
-    /**
-     * Función para actualizar un perfil
-     *
-     * @param Request $request
-     * @return json
-     */
     public function updateMyProfile(Request $request)
     {
         // Obtenemos el usuario por su id
@@ -192,12 +157,6 @@ class UserController extends Controller
         ]);
     }
 
-    /**
-     * Función para mostrar el mapa
-     *
-     * @param Request $request
-     * @return json
-     */
     public function mostrarMapa(Request $request)
     {
         // Obtenemos el usuario

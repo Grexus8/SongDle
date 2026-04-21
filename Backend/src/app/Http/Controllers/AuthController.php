@@ -12,12 +12,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    /**
-     * Función para registrar un usuario
-     *
-     * @param UserRequest $request
-     * @return json
-     */
     public function createUser(UserRequest $request)
     {
         try {
@@ -58,12 +52,6 @@ class AuthController extends Controller
         
     }
 
-    /**
-     * Función de login para usuarios
-     *
-     * @param LoginUserRequest $request
-     * @return json
-     */
     public function loginUser(LoginUserRequest $request)
     {
         try {
@@ -101,12 +89,6 @@ class AuthController extends Controller
             ], 500);
         }  
     }
-/**
- * Función para cerrar sesión
- *
- * @param Request $request
- * @return json
- */
 public function logoutUser(Request $request)
 {
     try {
