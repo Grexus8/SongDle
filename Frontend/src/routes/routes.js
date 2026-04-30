@@ -4,6 +4,7 @@ import IndexView from '../views/IndexView.vue'
 import cancion from '../views/cancion.vue';
 import artista from '../views/artista.vue';
 import album from '../views/album.vue';
+import Login from '../views/Login.vue';
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/album/:id?',          
     name: 'album',
     component: album
+  },
+  {
+    path: '/login',          
+    name: 'login',
+    component: Login
   },
 
 ]

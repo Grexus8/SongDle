@@ -15,60 +15,54 @@ class AuthController extends Controller
     public function createUser(UserRequest $request)
     {
         try {
-            // Creación del usuario mediante las inserciones del formulario con la contraseña encriptada 
+            // Creación del usuario (ahora podemos incluir la imagen vacía por defecto aquí directamente si queremos, o dejarla null)
             $user = User::create([
                     'name' => $request->name,
                     'email' => $request->email,
                     'phone' => $request->phone,
                     'registration_date' => $request->registration_date,
                     'password' => Hash::make($request->password),
+                    'profile_img' => null, // Lo guardamos directamente en la tabla users
                 ]);
-
-            $user->profile()->create([
-            // Inicializamos las variables del perfil vacías
-            'profile_img' => null, 
-            ]);
             
             // Creamos el token a partir del usuario
             $token = $user->createToken('api-token')->plainTextToken;
 
-            // Insertem el token en las cookies
+            // Insertamos el token en las cookies
             $cookie = cookie('auth_token', $token, 9999, '/', null, false, true);
 
-            // Respuesta en json
+            // Respuesta en json (ya no usamos $user->load('profile'))
             return response()->json([
                 'status' => 'true',
                 'message' => 'Usuari creat correctament',
                 'token' => $token,
-                'user' => $user->load('profile'),
+                'user' => $user, 
             ], 200)->withCookie($cookie);
+
         } catch(Exception $e) {
             return response()->json([
                 'status' => 'false',
                 'message' => 'Error al crear el usuari',
-                'error' => $e,
-            ], 200);
+                'error' => $e->getMessage(),
+            ], 500);
         }
-        
     }
 
     public function loginUser(LoginUserRequest $request)
     {
         try {
-            // Comprobamos que el usuario no se equivoque al introducir las credenciales
-            if (!Auth::attempt($request->only(['email', 'password']))) {
-                
-                // Resposta en JSON
+            // 1. Buscamos al usuario directamente en la base de datos por su nombre
+            $user = User::where('name', $request->name)->first();
+
+            // 2. Comprobamos si el usuario NO existe o si la contraseña es incorrecta
+            if (! $user || ! Hash::check($request->password, $user->password)) {
                 return response()->json([
                     'status' => 'false',
                     'message' => 'Credencials incorrectes',
                 ], 401);
             }
 
-            // Verificamos el usuario
-            $user = User::where('email', $request->email)->first();
-
-            // Creamos el token con los datos del usuario
+            // 3. Si pasamos el filtro de arriba, todo está bien. Creamos el token.
             $token = $user->createToken('api-token')->plainTextToken;
 
             // Insertamos el token en las cookies
@@ -81,35 +75,13 @@ class AuthController extends Controller
                 'token' => $token,
                 'user' => $user,
             ], 200)->withCookie($cookie);
+            
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'false',
                 'message' => 'Error al autenticar el usuari',
-                'error' => $e,
+                'error' => $e->getMessage(),
             ], 500);
         }  
     }
-public function logoutUser(Request $request)
-{
-    try {
-        // Elimina el token actual
-        $request->user()->currentAccessToken()->delete();
-
-        // Elimina la cookie
-        $cookie = cookie()->forget('auth_token');
-
-        // Retornamos la respuesta en formato json
-        return response()->json([
-            'status' => 'true',
-            'message' => 'Sessió tancada correctament'
-        ])->withCookie($cookie);
-    } catch (Exception $e) {
-        return response()->json([
-            'status' => 'false',
-            'message' => 'Error al tancar la sessió',
-            'error' => $e->getMessage(),
-        ], 500);
-    }
-}
-
 }
