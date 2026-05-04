@@ -5,6 +5,7 @@ import cancion from '../views/cancion.vue';
 import artista from '../views/artista.vue';
 import album from '../views/album.vue';
 import Login from '../views/Login.vue';
+import Register from '../views/Register.vue';
 
 const routes = [
   {
@@ -32,6 +33,12 @@ const routes = [
     name: 'login',
     component: Login
   },
+  {
+    path: '/register',          
+    name: 'register',
+    component: Register
+  },
+
 
 ]
 
