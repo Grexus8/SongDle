@@ -7,9 +7,11 @@ const route = useRoute()
 const busqueda = ref("");
 const listarCanciones = ref([]);
 const cancionSecreta = ref(null);
-
+const intento = ref(null);
+const mostrarModalGanador = ref(false);
+const mostrarModalPerdedor = ref(false);
 const intentos = ref([]);
-
+const Dificil = route.query.Dificil === 'true';
 onMounted(async () => {
     try {
         const id = route.params.id
@@ -46,38 +48,48 @@ const cancionesFiltradas = computed(() => {
 const seleccionar = (cancion) => {
     intentos.value.unshift(cancion);
     busqueda.value = "";
-}
-
-const obtenerClaseMultiple = (intentoValor, secretoValor) => {
-    if (!intentoValor || !secretoValor) return 'fallo';
-    if (intentoValor === secretoValor) return 'acierto';
-
-    const arrayIntento = String(intentoValor).split(',').map(p => p.trim().toLowerCase());
-    const arraySecreto = String(secretoValor).split(',').map(p => p.trim().toLowerCase());
-
-    const coincidencias = arrayIntento.filter(v => arraySecreto.includes(v));
-
-    if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
-        return 'acierto';
-    } else if (coincidencias.length > 0) {
-        return 'masomenos';
-    } else {
-        return 'fallo';
+    // 1. Comprobamos si gana
+    if (cancion.id_song === cancionSecreta.value.id_song) {
+        mostrarModalGanador.value = true; 
+    } 
+    else if (Dificil && intentos.value.length >= 5) {
+        mostrarModalPerdedor.value = true;
+    }
+    else if (!Dificil && intentos.value.length >= 10) {
+        mostrarModalPerdedor.value = true;
     }
 }
+
+// const obtenerClaseMultiple = (intentoValor, secretoValor) => {
+//     if (!intentoValor || !secretoValor) return 'fallo';
+//     if (intentoValor === secretoValor) return 'acierto';
+
+//     const arrayIntento = String(intentoValor).split(',').map(p => p.trim().toLowerCase());
+//     const arraySecreto = String(secretoValor).split(',').map(p => p.trim().toLowerCase());
+
+//     const coincidencias = arrayIntento.filter(v => arraySecreto.includes(v));
+
+//     if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
+//         return 'acierto';
+//     } else if (coincidencias.length > 0) {
+//         return 'masomenos';
+//     } else {
+//         return 'fallo';
+//     }
+// }
 </script>
 
 <template>
     <div class="contenedor-juego">
         
         <RouterLink to="/" class="btn-volver" title="Volver al inicio">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icono-volver">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </RouterLink>
 
-        <h1>SongDle - Canciones</h1><br>
+        <h1>SongDle - Canciones</h1>
         
         <div class="buscador-wrapper">
             <input 
@@ -107,49 +119,75 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
             <div v-for="intento in intentos" :key="intento.id_song" class="fila-comparacion">
                 
                 <div class="caja-dato" :class="intento.titulo === cancionSecreta.titulo ? 'acierto' : 'fallo'">
-                    <small>Título</small><br>
-                    {{ intento.titulo }}
+                    <small>Título</small>
+                    <span>{{ intento.titulo }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.id_artista === cancionSecreta.id_artista ? 'acierto' : 'fallo'">
-                    <small>Artista</small><br>
-                    {{ intento.artist?.nombre || 'Desconocido' }}
+                    <small>Artista</small>
+                    <span>{{ intento.artist?.nombre || 'Desconocido' }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.pais === cancionSecreta.pais ? 'acierto' : 'fallo'">
-                    <small>País</small><br>
-                    {{ intento.pais }}
+                    <small>País</small>
+                    <span>{{ intento.pais }}</span>
                 </div>
 
-                <div class="caja-dato" :class="obtenerClaseMultiple(intento.genero, cancionSecreta.genero)">
-                    <small>Género</small><br>
-                    {{ intento.genero }}
+                <div class="caja-dato" :class="intento.genero === cancionSecreta.genero ? 'acierto' : 'fallo' ">
+                    <small>Género</small>
+                    <span>{{ intento.genero }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.anio === cancionSecreta.anio ? 'acierto' : 'fallo'">
-                    <small>Año</small><br>
-                    {{ intento.anio }}
-                    <span v-if="intento.anio < cancionSecreta.anio" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.anio > cancionSecreta.anio" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Año</small>
+                    <span>
+                        {{ intento.anio }}
+                        <span v-if="intento.anio < cancionSecreta.anio" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.anio > cancionSecreta.anio" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.reproducciones === cancionSecreta.reproducciones ? 'acierto' : 'fallo'">
-                    <small>Reproducciones</small><br>
-                    {{ intento.reproducciones.toLocaleString() }}
-                    <span v-if="intento.reproducciones < cancionSecreta.reproducciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.reproducciones > cancionSecreta.reproducciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Reproducciones</small>
+                    <span>
+                        {{ intento.reproducciones.toLocaleString() }}
+                        <span v-if="intento.reproducciones < cancionSecreta.reproducciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.reproducciones > cancionSecreta.reproducciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
             </div>
         </div>
+        <Teleport to="body">
+            <div v-if="mostrarModalGanador" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>¡FELICIDADES HAS GANADO!</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
+        <Teleport to="body">
+            <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>HAS PERDIDO</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -162,10 +200,9 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
     background: radial-gradient(circle at top, #141824 0%, #0a0c13 100%);
     color: #f1f5f9;
     padding: 40px 20px;
-    position: relative; /* Necesario para posicionar el botón de volver */
+    position: relative;
 }
 
-/* --- Botón Volver Rediseñado --- */
 .btn-volver {
     position: absolute;
     top: 30px;
@@ -193,11 +230,21 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
     transform: translateX(-3px);
 }
 
+.icono-volver {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 h1 {
     text-align: center;
     font-family: 'Dela Gothic One', cursive;
     font-size: 3rem;
-    margin-bottom: 10px;
+    margin-bottom: 35px;
     background: linear-gradient(to right, #ffffff, #d8b4fe);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -321,17 +368,25 @@ h1 {
     letter-spacing: 1px;
 }
 
+.caja-dato span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .flecha {
     display: inline-block;
-    margin-top: 6px;
     margin-left: 4px;
-    vertical-align: middle;
 }
 
 .icono-flecha {
     width: 18px;
     height: 18px;
-    stroke: currentColor; 
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     transition: transform 0.2s;
 }
 
@@ -362,5 +417,60 @@ h1 {
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
+}
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: #11141d;
+    border: 1px solid #ec4899;
+    padding: 3rem;
+    border-radius: 16px;
+    text-align: center;
+    color: #f8fafc;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    animation: fadeUp 0.3s ease-out;
+    max-width: 400px;
+    width: 90%;
+}
+
+.modal-content h2 {
+    font-family: 'Dela Gothic One', cursive;
+    font-size: 2rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    background: linear-gradient(to right, #4ade80, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-volver-inicio {
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    width: 100%;
+}
+
+.btn-volver-inicio:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(236, 72, 153, 0.4);
 }
 </style>

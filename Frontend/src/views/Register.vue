@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 
-// Variables de datos
 const usuarios = ref([]);
 const newUser = ref();
 const name = ref('');
@@ -11,11 +10,9 @@ const phone = ref('');
 const password = ref('');
 const profile = ref(null); 
 
-// Variables para los mensajes visuales
 const mensajeError = ref('');
 const mensajeExito = ref('');
 
-// Función para listar usuarios
 const listarUsuarios = async () => {
     try {
         const respuesta = await axios.get('http://localhost:8080/api/users');
@@ -29,18 +26,14 @@ onMounted(() => {
     listarUsuarios();
 });
 
-// Función que captura el archivo cuando el usuario lo selecciona
 const capturarFoto = (event) => {
     profile.value = event.target.files[0];
 }
 
-// Función para crear un usuario
 const crearusuario = async () => {
-    // Limpiamos mensajes previos
     mensajeError.value = '';
     mensajeExito.value = '';
 
-    // 1. REVISAMOS TODOS LOS USUARIOS UNO POR UNO
     for (const usuario of usuarios.value) {
         if (name.value === usuario.name) {
             mensajeError.value = "El nombre de usuario ya existe.";
@@ -52,7 +45,6 @@ const crearusuario = async () => {
         }
     }
 
-    // 2. PREPARAMOS EL PAQUETE CON LA FOTO (FORMDATA)
     try {
         const formData = new FormData();
         formData.append('name', name.value);
@@ -66,7 +58,6 @@ const crearusuario = async () => {
             formData.append('profile_img', profile.value);
         }
 
-        // 3. ENVIAMOS LOS DATOS A LARAVEL
         const respuesta = await axios.post('http://localhost:8080/api/auth/register', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data' 
@@ -76,7 +67,6 @@ const crearusuario = async () => {
         newUser.value = respuesta.data;
         mensajeExito.value = "¡Usuario creado con éxito! Ya puedes iniciar sesión.";
         
-        // Limpiamos el formulario tras el éxito
         name.value = '';
         email.value = '';
         phone.value = '';
@@ -96,14 +86,12 @@ const crearusuario = async () => {
 <div class="register-container">
     <div class="register-card">
         
-        <!-- Cabecera -->
         <div class="header-center">
             <h1 class="logo">SongDle</h1>
             <p class="subtitle">CREAR CUENTA</p>
         </div>
 
         <div class="register-form">
-            <!-- Inputs -->
             <div class="input-group">
                 <label>Nombre de usuario</label>
                 <input type="text" v-model="name" placeholder="Introduce tu nombre" class="custom-input">
@@ -129,9 +117,8 @@ const crearusuario = async () => {
                 <input type="file" @change="capturarFoto" accept="image/*" class="custom-file-input">
             </div>
 
-            <!-- Mensajes de Error y Éxito -->
             <div v-if="mensajeError" class="alert-box error-box">
-                <svg xmlns="http://www.w3.org/2000/svg" class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" class="alert-icon">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -140,17 +127,15 @@ const crearusuario = async () => {
             </div>
 
             <div v-if="mensajeExito" class="alert-box success-box">
-                <svg xmlns="http://www.w3.org/2000/svg" class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" class="alert-icon">
                     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
                 <span>{{ mensajeExito }}</span>
             </div>
 
-            <!-- Botón -->
             <button @click="crearusuario" class="play-btn-gradient">REGISTRARSE</button>
             
-            <!-- Enlace volver a login -->
             <div class="login-link">
                 ¿Ya tienes cuenta? <RouterLink to="/login" class="link">Inicia sesión aquí</RouterLink>
             </div>
@@ -248,7 +233,6 @@ const crearusuario = async () => {
 
 .custom-input::placeholder { color: #475569; }
 
-/* Estilo avanzado para el input file */
 .custom-file-input {
     width: 100%;
     background-color: #0b0d14;
@@ -325,7 +309,6 @@ const crearusuario = async () => {
     text-decoration: underline;
 }
 
-/* Cajas de Alerta */
 .alert-box {
     margin-top: 0.5rem;
     padding: 1rem 1.2rem;
@@ -353,6 +336,11 @@ const crearusuario = async () => {
 .alert-icon {
     width: 20px;
     height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     flex-shrink: 0;
 }
 
@@ -368,7 +356,6 @@ const crearusuario = async () => {
     75% { transform: translateX(-5px); }
 }
 
-/* Quitar flechas del input number */
 input[type=number]::-webkit-inner-spin-button, 
 input[type=number]::-webkit-outer-spin-button { 
     -webkit-appearance: none; 

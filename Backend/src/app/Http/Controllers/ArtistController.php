@@ -30,7 +30,7 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'pais' => 'required|string|max:255',
-            'genero' => 'required|in:hombre,mujer',
+            'genero' => 'required|string|max:255',
             'debut' => 'required|integer|min:1900|max:' . date('Y'),
             'cantidad_albumes' => 'required|integer|min:0',
             'premios' => 'nullable|string|max:255',
@@ -53,7 +53,7 @@ class ArtistController extends Controller
         $validated = $request->validate([
             'nombre' => 'sometimes|string|max:255',
             'pais' => 'sometimes|string|max:255',
-            'genero' => 'sometimes|in:hombre,mujer',
+            'genero' => 'sometimes|string|max:255',
             'debut' => 'sometimes|integer|min:1900|max:' . date('Y'),
             'cantidad_albumes' => 'sometimes|integer|min:0',
             'premios' => 'nullable|string|max:255',

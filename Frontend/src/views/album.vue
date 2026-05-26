@@ -1,24 +1,17 @@
 <script setup>
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
 
-const route = useRoute()
 const busqueda = ref("");
 const listarAlbums = ref([]);
 const albumSecreto = ref(null);
-
+const mostrarModalGanador = ref(false);
+const mostrarModalPerdedor = ref(false);
 const intentos = ref([]);
 
 onMounted(async () => {
     try {
-        const id = route.params.id
-        let url = 'http://localhost:8080/api/albums'
-        if (id){
-            url = url +'?id_artista='+id
-        }
-        
-        const cargar = await axios.get(url);
+        const cargar = await axios.get('http://localhost:8080/api/albums');
         listarAlbums.value = cargar.data;
 
         if (listarAlbums.value.length > 0) {
@@ -39,7 +32,6 @@ const albumsFiltrados = computed(() => {
     return listarAlbums.value.filter(album => {
         const yaIntentado = intentos.value.some(i => i.id_album === album.id_album);
         
-        // Buscador inteligente por inicio de palabras
         const palabras = album.nombre.toLowerCase().split(' ');
         const coincide = palabras.some(palabra => palabra.startsWith(buscar));
 
@@ -50,6 +42,12 @@ const albumsFiltrados = computed(() => {
 const seleccionar = (album) => {
     intentos.value.unshift(album);
     busqueda.value = "";
+    if (album.id_album === albumSecreto.value.id_album) {
+        mostrarModalGanador.value = true; 
+    } 
+    else if (intentos.value.length >= 5) {
+        mostrarModalPerdedor.value = true;
+    }
 }
 
 const getAnio = (fecha) => {
@@ -62,13 +60,13 @@ const getAnio = (fecha) => {
     <div class="contenedor-juego">
         
         <RouterLink to="/" class="btn-volver" title="Volver a Inicio">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icono-volver">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </RouterLink>
 
-        <h1>SongDle - Álbums</h1><br>
+        <h1>SongDle - Álbums</h1>
         
         <div class="buscador-wrapper">
             <input 
@@ -98,71 +96,100 @@ const getAnio = (fecha) => {
             <div v-for="intento in intentos" :key="intento.id_album" class="fila-comparacion">
                 
                 <div class="caja-dato" :class="intento.nombre === albumSecreto.nombre ? 'acierto' : 'fallo'">
-                    <small>Álbum</small><br>
-                    {{ intento.nombre }}
+                    <small>Álbum</small>
+                    <span>{{ intento.nombre }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.id_artista === albumSecreto.id_artista ? 'acierto' : 'fallo'">
-                    <small>Artista</small><br>
-                    {{ intento.artist?.nombre || 'Desconocido' }}
+                    <small>Artista</small>
+                    <span>{{ intento.artist?.nombre || 'Desconocido' }}</span>
                 </div>
 
                 <div class="caja-dato" :class="getAnio(intento.fecha_lanzamiento) === getAnio(albumSecreto.fecha_lanzamiento) ? 'acierto' : 'fallo'">
-                    <small>Año</small><br>
-                    {{ getAnio(intento.fecha_lanzamiento) }}
-                    <span v-if="getAnio(intento.fecha_lanzamiento) < getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="getAnio(intento.fecha_lanzamiento) > getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Año</small>
+                    <span>
+                        {{ getAnio(intento.fecha_lanzamiento) }}
+                        <span v-if="getAnio(intento.fecha_lanzamiento) < getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="getAnio(intento.fecha_lanzamiento) > getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.cantidad_canciones === albumSecreto.cantidad_canciones ? 'acierto' : 'fallo'">
-                    <small>Canciones</small><br>
-                    {{ intento.cantidad_canciones }}
-                    <span v-if="intento.cantidad_canciones < albumSecreto.cantidad_canciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.cantidad_canciones > albumSecreto.cantidad_canciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Canciones</small>
+                    <span>
+                        {{ intento.cantidad_canciones }}
+                        <span v-if="intento.cantidad_canciones < albumSecreto.cantidad_canciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.cantidad_canciones > albumSecreto.cantidad_canciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="Boolean(intento.colaboraciones) === Boolean(albumSecreto.colaboraciones) ? 'acierto' : 'fallo'">
-                    <small>Feat.</small><br>
-                    {{ intento.colaboraciones ? 'Sí' : 'No' }}
+                    <small>Feat.</small>
+                    <span>{{ intento.colaboraciones ? 'Sí' : 'No' }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.premios === albumSecreto.premios ? 'acierto' : 'fallo'">
-                    <small>Premios</small><br>
-                    {{ intento.premios }}
-                    <span v-if="intento.premios < albumSecreto.premios" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.premios > albumSecreto.premios" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Premios</small>
+                    <span>
+                        {{ intento.premios }}
+                        <span v-if="intento.premios < albumSecreto.premios" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.premios > albumSecreto.premios" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.reproducciones === albumSecreto.reproducciones ? 'acierto' : 'fallo'">
-                    <small>Streams</small><br>
-                    {{ intento.reproducciones?.toLocaleString() }}
-                    <span v-if="intento.reproducciones < albumSecreto.reproducciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.reproducciones > albumSecreto.reproducciones" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Streams</small>
+                    <span>
+                        {{ intento.reproducciones?.toLocaleString() }}
+                        <span v-if="intento.reproducciones < albumSecreto.reproducciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.reproducciones > albumSecreto.reproducciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
             </div>
         </div>
+        <Teleport to="body">
+            <div v-if="mostrarModalGanador" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>¡FELICIDADES HAS GANADO!</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
+        <Teleport to="body">
+            <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>HAS PERDIDO</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
-<style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Montserrat:wght@400;500;600;700&display=swap');
+<style scoped>@import url('https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Montserrat:wght@400;500;600;700&display=swap');
 
 .contenedor-juego {
     font-family: 'Montserrat', sans-serif;
@@ -200,11 +227,21 @@ const getAnio = (fecha) => {
     transform: translateX(-3px);
 }
 
+.icono-volver {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 h1 {
     text-align: center;
     font-family: 'Dela Gothic One', cursive;
     font-size: 3rem;
-    margin-bottom: 10px;
+    margin-bottom: 35px;
     background: linear-gradient(to right, #ffffff, #d8b4fe);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -319,17 +356,25 @@ h1 {
     letter-spacing: 1px;
 }
 
+.caja-dato span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .flecha {
     display: inline-block;
-    margin-top: 6px;
     margin-left: 4px;
-    vertical-align: middle;
 }
 
 .icono-flecha {
     width: 18px;
     height: 18px;
-    stroke: currentColor; 
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .acierto { background-color: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; }
@@ -340,4 +385,54 @@ h1 {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
-</style>
+
+/* --- NUEVO CSS PARA MODALES --- */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: #11141d;
+    border: 1px solid #ec4899;
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 90%;
+    animation: fadeUp 0.3s ease-out;
+}
+
+.modal-content h2 {
+    font-family: 'Dela Gothic One', cursive;
+    color: #f8fafc;
+    margin-bottom: 2rem;
+    background: linear-gradient(to right, #ffffff, #d8b4fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-volver-inicio {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+    transition: transform 0.2s;
+}
+
+.btn-volver-inicio:hover {
+    transform: translateY(-2px);
+}</style>

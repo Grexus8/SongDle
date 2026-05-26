@@ -8,6 +8,7 @@ const router = useRouter();
 const artistaFiltro = ref('');
 const Seleccionarcancion = ref(false)
 const Seleccionarartista = ref(false)
+const Dificil = ref(false)
 const Seleccionaralbum = ref(false)
 const cancionClasico = ref(false)
 const cancionFiltrado = ref(false)
@@ -15,16 +16,14 @@ const albumClasico = ref(false)
 const albumFiltrado = ref(false)
 const artistas = ref([])
 
-// --- NUEVAS VARIABLES PARA EL DESPLEGABLE CUSTOM ---
 const dropdownAbierto = ref(false);
 const artistaSeleccionadoNombre = ref('');
 
 const seleccionarArtista = (id, nombre) => {
   artistaFiltro.value = id;
   artistaSeleccionadoNombre.value = nombre;
-  dropdownAbierto.value = false; // Cierra el menú al elegir
+  dropdownAbierto.value = false;
 }
-// ---------------------------------------------------
 
 const opcionesArtistas = async  () => {
  const cargar = await axios.get('http://localhost:8080/api/artists');
@@ -39,12 +38,13 @@ const JugarCancionFiltrada = () => {
   })
 }
 
-const JugarAlbumFiltrado = () => {
+const JugarModoDificil = (modo) => {
   router.push({
-    name:'album',
-    params:{id: artistaFiltro.value}
+      name: `${modo}`,
+      query: { Dificil: Dificil.value }
   })
 }
+
 
 onMounted(() => {
   opcionesArtistas()
@@ -57,7 +57,7 @@ onMounted(() => {
       <div class="header-left">
         
         <div class="icon-group group-stats">
-          <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon">
             <line x1="18" y1="20" x2="18" y2="10"></line>
             <line x1="12" y1="20" x2="12" y2="4"></line>
             <line x1="6" y1="20" x2="6" y2="14"></line>
@@ -117,29 +117,33 @@ onMounted(() => {
             <div class="modes-layout">
               <div class="column-left">
                 <button 
-                  @click="cancionClasico = true, cancionFiltrado = false" 
+                  @click="cancionClasico = true, cancionFiltrado = false, Dificil = false" 
                   class="mode-btn-outline"
                   :class="{ selected: cancionClasico }"
-                >
-                  JUEGO CLÁSICO
+                >JUEGO CLÁSICO
                 </button>
+                  <div v-if="cancionClasico" class="dificultad-wrapper fade-in">
+                    <label class="toggle-switch">
+                      <input type="checkbox" v-model="Dificil">
+                      <span class="slider"></span>
+                    </label>
+                    <span class="dificultad-texto">Activar Modo Difícil</span>
+                  </div>  
                 <button 
-                  @click="cancionClasico = false, cancionFiltrado = true" 
+                  @click="cancionClasico = false, cancionFiltrado = true"
                   class="mode-btn-outline"
                   :class="{ selected: cancionFiltrado }"
-                >
-                  MODO ARTISTA
+                >MODO ARTISTA
                 </button>
               </div>
 
               <div class="column-right">
                 <div v-if="cancionFiltrado" class="dropdown-wrapper">
                   <div class="custom-select-dark" @click="dropdownAbierto = !dropdownAbierto" :class="{ 'is-open': dropdownAbierto }">
-                    <span>{{ artistaSeleccionadoNombre || 'Filtrar por artista (opcional)' }}</span>
+                    <span>{{ artistaSeleccionadoNombre || 'Filtrar por artista' }}</span>
                   </div>
                   
                   <ul v-if="dropdownAbierto" class="custom-options-list">
-                    <li @click="seleccionarArtista('', '')" class="default-option">Filtrar por artista (opcional)</li>
                     <li 
                       v-for="artista in artistas" 
                       :key="artista.id_artista" 
@@ -154,7 +158,7 @@ onMounted(() => {
             </div>
 
             <div class="play-wrapper">
-                <button v-if="cancionClasico || cancionFiltrado" @click="JugarCancionFiltrada()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
+                <button v-if="cancionClasico || cancionFiltrado" @click="cancionClasico ? JugarModoDificil() : JugarModoDificil()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
             </div>
           </div>
 
@@ -167,48 +171,8 @@ onMounted(() => {
 
           <div v-if="Seleccionaralbum" class="step-animation">
             <p class="step-title">Paso 2: Elige el Modo de Juego</p>
-            
-            <div class="modes-layout">
-              <div class="column-left">
-                <button 
-                  @click="albumClasico = true, albumFiltrado = false" 
-                  class="mode-btn-outline"
-                  :class="{ selected: albumClasico }"
-                >
-                  JUEGO CLÁSICO
-                </button>
-                <button 
-                  @click="albumClasico = false, albumFiltrado = true" 
-                  class="mode-btn-outline"
-                  :class="{ selected: albumFiltrado }"
-                >
-                  MODO ARTISTA
-                </button>
-              </div>
-
-              <div class="column-right">
-                <div v-if="albumFiltrado" class="dropdown-wrapper">
-                  <div class="custom-select-dark" @click="dropdownAbierto = !dropdownAbierto" :class="{ 'is-open': dropdownAbierto }">
-                    <span>{{ artistaSeleccionadoNombre || 'Filtrar por artista (opcional)' }}</span>
-                  </div>
-                  
-                  <ul v-if="dropdownAbierto" class="custom-options-list">
-                    <li @click="seleccionarArtista('', '')" class="default-option">Filtrar por artista (opcional)</li>
-                    <li 
-                      v-for="artista in artistas" 
-                      :key="artista.id_artista" 
-                      @click="seleccionarArtista(artista.id_artista, artista.nombre)"
-                      :class="{ 'selected-item': artistaFiltro === artista.id_artista }"
-                    >
-                      {{ artista.nombre }}
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            <div class="play-wrapper">
-                <button v-if="albumClasico || albumFiltrado" @click="JugarAlbumFiltrado()" class="play-btn-gradient">¡A JUGAR ÁLBUM!</button>
+            <div class="single-mode-wrapper">
+              <RouterLink to="album" class="mode-link"><button class="play-btn-gradient">JUGAR MODO ALBUM</button></RouterLink>
             </div>
           </div>
 
@@ -237,6 +201,14 @@ onMounted(() => {
   color: #f1f5f9;
 }
 
+.main-content {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -249,8 +221,9 @@ onMounted(() => {
 
 .header-left, .header-right { flex: 1; }
 .header-left { display: flex; gap: 1rem; }
+.header-center { flex: 2; text-align: center; }
+.header-right { display: flex; justify-content: flex-end; }
 
-/* NUEVOS ESTILOS PARA LOS ICONOS SUPERIORES */
 .icon-group {
   display: flex;
   align-items: center;
@@ -272,23 +245,17 @@ onMounted(() => {
 .nav-icon {
   width: 18px;
   height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   opacity: 0.8;
   transition: all 0.3s ease;
 }
 
-/* Efecto dorado/amarillo sutil para el Trofeo */
-.group-ranking:hover .nav-icon {
-  opacity: 1;
-  color: #fbbf24; 
-}
-
-/* Efecto morado/rosa para las Estadísticas */
-.group-stats:hover .nav-icon {
-  opacity: 1;
-  color: #d8b4fe; 
-}
-
-.header-center { flex: 2; text-align: center; }
+.group-ranking:hover .nav-icon { color: #fbbf24; opacity: 1; }
+.group-stats:hover .nav-icon { color: #d8b4fe; opacity: 1; }
 
 .logo {
   font-family: 'Dela Gothic One', cursive;
@@ -309,8 +276,6 @@ onMounted(() => {
   font-weight: 600;
 }
 
-.header-right { display: flex; justify-content: flex-end; }
-
 .avatar-circle {
   width: 45px;
   height: 45px;
@@ -323,15 +288,8 @@ onMounted(() => {
   cursor: pointer;
   transition: border-color 0.2s;
 }
-.avatar-circle:hover { border-color: #8b5cf6; }
 
-.main-content {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
+.avatar-circle:hover { border-color: #8b5cf6; }
 
 .config-card {
   width: 100%;
@@ -343,6 +301,30 @@ onMounted(() => {
   flex-direction: column;
   background-color: #11141d;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+}
+
+.card-content {
+  padding: 4rem 3rem;
+  min-height: 380px; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.instruction-text {
+  font-size: 1.2rem;
+  text-align: center;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.step-title {
+  font-size: 1.2rem;
+  color: #f8fafc;
+  font-weight: 600;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  letter-spacing: 1px;
 }
 
 .tabs-container {
@@ -376,6 +358,7 @@ onMounted(() => {
   color: #ffffff;
   background-color: #151923;
 }
+
 .tab-btn.active::after {
   content: '';
   position: absolute;
@@ -385,30 +368,6 @@ onMounted(() => {
   height: 3px;
   background: linear-gradient(90deg, #8b5cf6, #ec4899); 
   box-shadow: 0 -2px 10px rgba(236, 72, 153, 0.4);
-}
-
-.card-content {
-  padding: 4rem 3rem;
-  min-height: 380px; 
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.instruction-text {
-  font-size: 1.2rem;
-  text-align: center;
-  font-weight: 500;
-  color: #94a3b8;
-}
-
-.step-title {
-  font-size: 1.2rem;
-  color: #f8fafc;
-  font-weight: 600;
-  margin-bottom: 2.5rem;
-  text-align: center;
-  letter-spacing: 1px;
 }
 
 .modes-layout {
@@ -451,6 +410,46 @@ onMounted(() => {
   color: #ffffff;
   background-color: rgba(168, 85, 247, 0.1);
   box-shadow: inset 0 0 15px rgba(168, 85, 247, 0.15);
+}
+
+.play-wrapper, .single-mode-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.play-btn-gradient {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 1.2rem 3rem;
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.4);
+  transition: all 0.3s ease;
+}
+
+.play-btn-gradient:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.6);
+}
+
+.play-btn-gradient:active {
+  transform: translateY(1px);
+}
+
+.mode-link {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  text-decoration: none;
 }
 
 .dropdown-wrapper {
@@ -516,14 +515,8 @@ onMounted(() => {
   transition: background-color 0.2s, color 0.2s;
 }
 
-.custom-options-list li:last-child {
-  border-bottom: none;
-}
-
-.custom-options-list li:hover {
-  background-color: #1a1f2e;
-  color: #ffffff;
-}
+.custom-options-list li:last-child { border-bottom: none; }
+.custom-options-list li:hover { background-color: #1a1f2e; color: #ffffff; }
 
 .custom-options-list li.selected-item {
   background-color: rgba(168, 85, 247, 0.15);
@@ -536,61 +529,10 @@ onMounted(() => {
   color: #64748b !important;
 }
 
-.custom-options-list::-webkit-scrollbar {
-  width: 8px;
-}
-.custom-options-list::-webkit-scrollbar-track {
-  background: #0b0d14; 
-}
-.custom-options-list::-webkit-scrollbar-thumb {
-  background: #334155; 
-  border-radius: 4px;
-}
-.custom-options-list::-webkit-scrollbar-thumb:hover {
-  background: #ec4899; 
-}
-
-.play-wrapper, .single-mode-wrapper {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-top: 3rem;
-}
-
-.play-btn-gradient {
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  padding: 1.2rem 3rem;
-  font-family: inherit;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-  cursor: pointer;
-  width: 100%;
-  max-width: 450px;
-  box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.4);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.play-btn-gradient:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.6);
-}
-
-.play-btn-gradient:active {
-  transform: translateY(1px);
-}
-
-.mode-link {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    text-decoration: none;
-}
+.custom-options-list::-webkit-scrollbar { width: 8px; }
+.custom-options-list::-webkit-scrollbar-track { background: #0b0d14; }
+.custom-options-list::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+.custom-options-list::-webkit-scrollbar-thumb:hover { background: #ec4899; }
 
 .step-animation {
   animation: fadeUp 0.4s ease-out;
@@ -598,6 +540,75 @@ onMounted(() => {
 
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dificultad-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: rgba(139, 92, 246, 0.05); 
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 1rem;
+  border-radius: 12px;
+  margin-top: -5px;
+}
+
+.dificultad-texto {
+  color: #d8b4fe;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  box-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
 }
 </style>

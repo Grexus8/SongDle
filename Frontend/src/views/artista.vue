@@ -5,7 +5,8 @@ import { ref, onMounted, computed } from 'vue';
 const busqueda = ref("");
 const listarArtistas = ref([]);
 const artistSecreto = ref(null);
-
+const mostrarModalGanador = ref(false);
+const mostrarModalPerdedor = ref(false);
 const intentos = ref([]);
 
 onMounted(async () => {
@@ -30,7 +31,6 @@ const artistasFiltrados = computed(() => {
     return listarArtistas.value.filter(artista => {
         const yaIntentado = intentos.value.some(i => i.id_artista === artista.id_artista);
         
-        // Buscador inteligente por inicio de palabras
         const palabras = artista.nombre.toLowerCase().split(' ');
         const coincide = palabras.some(palabra => palabra.startsWith(buscar));
 
@@ -41,6 +41,12 @@ const artistasFiltrados = computed(() => {
 const seleccionar = (artista) => {
     intentos.value.unshift(artista);
     busqueda.value = "";
+    if (artista.id_artista === artistSecreto.value.id_artista) {
+        mostrarModalGanador.value = true; 
+    } 
+    else if (intentos.value.length >= 10) {
+        mostrarModalPerdedor.value = true;
+    }
 }
 
 const obtenerClasePremios = (intentoPremios, secretoPremios) => {
@@ -66,13 +72,13 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
     <div class="contenedor-juego">
         
         <RouterLink to="/" class="btn-volver" title="Volver a Inicio">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="icono-volver">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </RouterLink>
 
-        <h1>SongDle - Artista</h1><br>
+        <h1>SongDle - Artista</h1>
         
         <div class="buscador-wrapper">
             <input 
@@ -102,60 +108,88 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
             <div v-for="(intento, index) in intentos" :key="intento.id_artista" class="fila-comparacion">
                 
                 <div class="caja-dato" :class="intento.nombre === artistSecreto.nombre ? 'acierto' : 'fallo'">
-                    <small>Nombre</small><br>
-                    {{ intento.nombre }}
+                    <small>Nombre</small>
+                    <span>{{ intento.nombre }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.pais === artistSecreto.pais ? 'acierto' : 'fallo'">
-                    <small>País</small><br>
-                    {{ intento.pais || '?' }}
+                    <small>País</small>
+                    <span>{{ intento.pais || '?' }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.genero === artistSecreto.genero ? 'acierto' : 'fallo'">
-                    <small>Género</small><br>
-                    {{ intento.genero }}
+                    <small>Género</small>
+                    <span>{{ intento.genero }}</span>
                 </div>
 
                 <div class="caja-dato" :class="intento.debut === artistSecreto.debut ? 'acierto' : 'fallo'">
-                    <small>Debut</small><br>
-                    {{ intento.debut }}
-                    <span v-if="intento.debut < artistSecreto.debut" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.debut > artistSecreto.debut" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Debut</small>
+                    <span>
+                        {{ intento.debut }}
+                        <span v-if="intento.debut < artistSecreto.debut" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.debut > artistSecreto.debut" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.cantidad_albumes === artistSecreto.cantidad_albumes ? 'acierto' : 'fallo'">
-                    <small>Álbumes</small><br>
-                    {{ intento.cantidad_albumes }}
-                    <span v-if="intento.cantidad_albumes < artistSecreto.cantidad_albumes" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.cantidad_albumes > artistSecreto.cantidad_albumes" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Álbumes</small>
+                    <span>
+                        {{ intento.cantidad_albumes }}
+                        <span v-if="intento.cantidad_albumes < artistSecreto.cantidad_albumes" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.cantidad_albumes > artistSecreto.cantidad_albumes" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="intento.oyentes_mensuales === artistSecreto.oyentes_mensuales ? 'acierto' : 'fallo'">
-                    <small>Oyentes</small><br>
-                    {{ intento.oyentes_mensuales }}
-                    <span v-if="intento.oyentes_mensuales < artistSecreto.oyentes_mensuales" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-                    </span>
-                    <span v-else-if="intento.oyentes_mensuales > artistSecreto.oyentes_mensuales" class="flecha">
-                        <svg class="icono-flecha" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                    <small>Oyentes</small>
+                    <span>
+                        {{ intento.oyentes_mensuales }}
+                        <span v-if="intento.oyentes_mensuales < artistSecreto.oyentes_mensuales" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.oyentes_mensuales > artistSecreto.oyentes_mensuales" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
                     </span>
                 </div>
 
                 <div class="caja-dato" :class="obtenerClasePremios(intento.premios, artistSecreto.premios)">
-                    <small>Premios</small><br>
-                    {{ intento.premios }}
+                    <small>Premios</small>
+                    <span>{{ intento.premios }}</span>
                 </div>
 
             </div>
         </div>
+        <Teleport to="body">
+            <div v-if="mostrarModalGanador" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>¡FELICIDADES HAS GANADO!</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
+        <Teleport to="body">
+            <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
+                <div class="modal-content" @click.stop>
+                    <h2>HAS PERDIDO</h2>
+                    
+                    <RouterLink to="/">
+                        <button class="btn-volver-inicio">Volver al inicio</button>
+                    </RouterLink>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -198,11 +232,21 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
     transform: translateX(-3px);
 }
 
+.icono-volver {
+    width: 24px;
+    height: 24px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 h1 {
     text-align: center;
     font-family: 'Dela Gothic One', cursive;
     font-size: 3rem;
-    margin-bottom: 10px;
+    margin-bottom: 35px;
     background: linear-gradient(to right, #ffffff, #d8b4fe);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -317,17 +361,25 @@ h1 {
     letter-spacing: 1px;
 }
 
+.caja-dato span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .flecha {
     display: inline-block;
-    margin-top: 6px;
     margin-left: 4px;
-    vertical-align: middle;
 }
 
 .icono-flecha {
     width: 18px;
     height: 18px;
-    stroke: currentColor; 
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 3px;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .acierto { background-color: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; }
@@ -337,5 +389,108 @@ h1 {
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* MODALES Y TOGGLE (Integrados con tu diseño) */
+
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: #11141d;
+    border: 1px solid #ec4899;
+    padding: 3rem;
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 90%;
+    animation: fadeUp 0.3s ease-out;
+}
+
+.modal-content h2 {
+    font-family: 'Dela Gothic One', cursive;
+    color: #f8fafc;
+    margin-bottom: 2rem;
+    background: linear-gradient(to right, #ffffff, #d8b4fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.btn-volver-inicio {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+    transition: transform 0.2s;
+}
+
+.btn-volver-inicio:hover {
+    transform: translateY(-2px);
+}
+
+/* Toggle Dificil Ajustado */
+.dificultad-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background-color: rgba(139, 92, 246, 0.05); 
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 20px auto;
+  max-width: 300px;
+}
+
+.dificultad-texto {
+  color: #d8b4fe;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+  position: absolute; cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #334155;
+  transition: .4s; border-radius: 34px;
+}
+
+.slider:before {
+  position: absolute; content: "";
+  height: 18px; width: 18px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s; border-radius: 50%;
+}
+
+input:checked + .slider {
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
 }
 </style>

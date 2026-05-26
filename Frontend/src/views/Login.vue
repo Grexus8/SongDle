@@ -15,11 +15,14 @@ const iniciarSesion = async () => {
             name: nombre.value, 
             password: contrasena.value
         });
-        
+        localStorage.setItem('token', respuesta.data.token);
+        localStorage.setItem('user',JSON.stringify(respuesta.data.name))
+        axios.defaults.headers.common['Authorization'] = `Bearer ${respuesta.data.token}`;
         router.push('/'); 
 
     } catch (error) {
-        console.error("Error al iniciar sesión", error);
+        console.error("Error al iniciar sesión", error.response?.data);
+        alert('¡usuario o contraseña no encontrados!')
         
         if (error.response && error.response.status === 401) {
             mensajeError.value = 'Usuario o contraseña incorrectos.';
@@ -44,7 +47,7 @@ const iniciarSesion = async () => {
         <div class="input-group">
           <label>Nombre de usuario</label>
           <div class="input-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="input-icon">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
               <circle cx="12" cy="7" r="4"></circle>
             </svg>
@@ -55,7 +58,7 @@ const iniciarSesion = async () => {
         <div class="input-group">
           <label>Contraseña</label>
           <div class="input-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" class="input-icon">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
               <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
             </svg>
@@ -66,9 +69,8 @@ const iniciarSesion = async () => {
         <button type="submit" class="play-btn-gradient">ENTRAR</button>
       </form>
 
-      <!-- Mensaje de error mejorado -->
       <div v-if="mensajeError" class="error-box">
-        <svg xmlns="http://www.w3.org/2000/svg" class="error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" class="error-icon">
           <circle cx="12" cy="12" r="10"></circle>
           <line x1="12" y1="8" x2="12" y2="12"></line>
           <line x1="12" y1="16" x2="12.01" y2="16"></line>
@@ -76,7 +78,6 @@ const iniciarSesion = async () => {
         <span>{{ mensajeError }}</span>
       </div>
 
-      <!-- Enlace para registrarse -->
       <div class="register-link">
         ¿Aún no tienes equipo? <RouterLink to="/register" class="link">Regístrate aquí</RouterLink>
       </div>
@@ -110,7 +111,6 @@ const iniciarSesion = async () => {
   animation: fadeUp 0.5s ease-out forwards;
 }
 
-/* --- Logo y Títulos --- */
 .header-center {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -142,7 +142,6 @@ const iniciarSesion = async () => {
   font-weight: 500;
 }
 
-/* --- Formulario e Inputs --- */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -173,6 +172,11 @@ const iniciarSesion = async () => {
   left: 1.2rem;
   width: 20px;
   height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   color: #64748b;
   transition: color 0.3s ease;
 }
@@ -182,7 +186,7 @@ const iniciarSesion = async () => {
   background-color: #0b0d14;
   color: #f8fafc;
   border: 1px solid #334155;
-  padding: 1.2rem 1.2rem 1.2rem 3.2rem; /* Más padding a la izquierda para el icono */
+  padding: 1.2rem 1.2rem 1.2rem 3.2rem; 
   border-radius: 12px;
   font-family: inherit;
   font-size: 1.05rem;
@@ -197,14 +201,13 @@ const iniciarSesion = async () => {
 
 .custom-input:focus + .input-icon, 
 .custom-input:not(:placeholder-shown) ~ .input-icon {
-  color: #ec4899; /* El icono se pinta de rosa si hay foco o texto */
+  color: #ec4899; 
 }
 
 .custom-input::placeholder {
   color: #475569;
 }
 
-/* --- Botón Entrar --- */
 .play-btn-gradient {
   background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
   color: #ffffff;
@@ -231,7 +234,6 @@ const iniciarSesion = async () => {
   transform: translateY(1px);
 }
 
-/* --- Enlace de registro --- */
 .register-link {
   text-align: center;
   font-size: 0.9rem;
@@ -251,7 +253,6 @@ const iniciarSesion = async () => {
   text-decoration: underline;
 }
 
-/* --- Caja de Error Estilizada --- */
 .error-box {
   margin-top: 1.5rem;
   padding: 1rem 1.2rem;
@@ -271,10 +272,14 @@ const iniciarSesion = async () => {
 .error-icon {
   width: 20px;
   height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
   flex-shrink: 0;
 }
 
-/* --- Animaciones --- */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }

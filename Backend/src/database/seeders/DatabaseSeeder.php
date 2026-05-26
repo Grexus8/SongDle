@@ -17,7 +17,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             ArtistSeeder::class,
             AlbumSeeder::class,
-            SongSeeder::class
+            SongSeeder::class,
+            // SpotifySeeder::class
         ]);
     }
 }
