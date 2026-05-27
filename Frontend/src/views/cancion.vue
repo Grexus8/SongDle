@@ -2,22 +2,28 @@
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const route = useRoute()
 const busqueda = ref("");
 const listarCanciones = ref([]);
 const cancionSecreta = ref(null);
-const intento = ref(null);
 const mostrarModalGanador = ref(false);
 const mostrarModalPerdedor = ref(false);
 const intentos = ref([]);
+const victoria = ref(false);
+const modo = 'cancion';
+const userStorage = localStorage.getItem('user');
+const userId = userStorage ? JSON.parse(userStorage).id_usuario : null;
 const Dificil = route.query.Dificil === 'true';
+
 onMounted(async () => {
     try {
         const id = route.params.id
         let url = 'http://localhost:8080/api/songs'
         if (id) {
-            url = url +'?id_artista='+id
+            url = url + '?id_artista=' + id
         }
         const cargar = await axios.get(url);
         listarCanciones.value = cargar.data;
@@ -32,15 +38,14 @@ onMounted(async () => {
 });
 
 const cancionesFiltradas = computed(() => {
-    if (busqueda.value === "") return []; 
+    if (busqueda.value.trim() === "") return []; 
 
-    const buscar = busqueda.value.toLowerCase();
+    const terminosBusqueda = busqueda.value.toLowerCase().split(' ').filter(t => t !== '');
 
     return listarCanciones.value.filter(cancion => {
         const yaIntentado = intentos.value.some(i => i.id_song === cancion.id_song);
-        const palabras = cancion.titulo.toLowerCase().split(' ');
-        const coincide = palabras.some(palabra => palabra.startsWith(buscar));
-
+        const textoCompleto = `${cancion.titulo} ${cancion.artist?.nombre || ''}`.toLowerCase();
+        const coincide = terminosBusqueda.every(termino => textoCompleto.includes(termino));
         return coincide && !yaIntentado;
     });
 });
@@ -48,8 +53,9 @@ const cancionesFiltradas = computed(() => {
 const seleccionar = (cancion) => {
     intentos.value.unshift(cancion);
     busqueda.value = "";
-    // 1. Comprobamos si gana
+
     if (cancion.id_song === cancionSecreta.value.id_song) {
+        victoria.value = true; // ← AÑADIDO
         mostrarModalGanador.value = true; 
     } 
     else if (Dificil && intentos.value.length >= 5) {
@@ -60,23 +66,35 @@ const seleccionar = (cancion) => {
     }
 }
 
-// const obtenerClaseMultiple = (intentoValor, secretoValor) => {
-//     if (!intentoValor || !secretoValor) return 'fallo';
-//     if (intentoValor === secretoValor) return 'acierto';
+const PartidaJugada = () => {
+    router.push({
+        name: 'estadisticas',
+        params: { id: userId },
+        query: { 
+            partida: intentos.value.length,
+            victoria: victoria.value,
+            modo: modo
+        }
+    });
+}
 
-//     const arrayIntento = String(intentoValor).split(',').map(p => p.trim().toLowerCase());
-//     const arraySecreto = String(secretoValor).split(',').map(p => p.trim().toLowerCase());
+const obtenerClaseMultiple = (intentoValor, secretoValor) => {
+    if (!intentoValor || !secretoValor) return 'fallo';
+    if (intentoValor === secretoValor) return 'acierto';
 
-//     const coincidencias = arrayIntento.filter(v => arraySecreto.includes(v));
+    const arrayIntento = String(intentoValor).split(',').map(p => p.trim().toLowerCase());
+    const arraySecreto = String(secretoValor).split(',').map(p => p.trim().toLowerCase());
 
-//     if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
-//         return 'acierto';
-//     } else if (coincidencias.length > 0) {
-//         return 'masomenos';
-//     } else {
-//         return 'fallo';
-//     }
-// }
+    const coincidencias = arrayIntento.filter(v => arraySecreto.includes(v));
+
+    if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
+        return 'acierto';
+    } else if (coincidencias.length > 0) {
+        return 'masomenos';
+    } else {
+        return 'fallo';
+    }
+}
 </script>
 
 <template>
@@ -133,7 +151,7 @@ const seleccionar = (cancion) => {
                     <span>{{ intento.pais }}</span>
                 </div>
 
-                <div class="caja-dato" :class="intento.genero === cancionSecreta.genero ? 'acierto' : 'fallo' ">
+                <div class="caja-dato" :class="obtenerClaseMultiple(intento.genero, cancionSecreta.genero)">
                     <small>Género</small>
                     <span>{{ intento.genero }}</span>
                 </div>
@@ -166,14 +184,12 @@ const seleccionar = (cancion) => {
 
             </div>
         </div>
+
         <Teleport to="body">
             <div v-if="mostrarModalGanador" class="modal-overlay"> 
                 <div class="modal-content" @click.stop>
                     <h2>¡FELICIDADES HAS GANADO!</h2>
-                    
-                    <RouterLink to="/">
-                        <button class="btn-volver-inicio">Volver al inicio</button>
-                    </RouterLink>
+                    <button class="btn-volver-inicio" @click="PartidaJugada">Ver estadísticas</button>
                 </div>
             </div>
         </Teleport>
@@ -181,10 +197,7 @@ const seleccionar = (cancion) => {
             <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
                 <div class="modal-content" @click.stop>
                     <h2>HAS PERDIDO</h2>
-                    
-                    <RouterLink to="/">
-                        <button class="btn-volver-inicio">Volver al inicio</button>
-                    </RouterLink>
+                    <button class="btn-volver-inicio" @click="PartidaJugada">Ver estadísticas</button>
                 </div>
             </div>
         </Teleport>
@@ -374,10 +387,7 @@ h1 {
     justify-content: center;
 }
 
-.flecha {
-    display: inline-block;
-    margin-left: 4px;
-}
+.flecha { display: inline-block; margin-left: 4px; }
 
 .icono-flecha {
     width: 18px;
@@ -390,25 +400,9 @@ h1 {
     transition: transform 0.2s;
 }
 
-.acierto { 
-    background-color: rgba(34, 197, 94, 0.1); 
-    border: 1px solid rgba(34, 197, 94, 0.4); 
-    color: #4ade80; 
-    box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.05);
-}
-
-.fallo { 
-    background-color: rgba(239, 68, 68, 0.05); 
-    border: 1px solid rgba(239, 68, 68, 0.2); 
-    color: #f87171; 
-}
-
-.masomenos { 
-    background-color: rgba(234, 179, 8, 0.1); 
-    border: 1px solid rgba(234, 179, 8, 0.4); 
-    color: #facc15; 
-    box-shadow: inset 0 0 15px rgba(234, 179, 8, 0.05);
-}
+.acierto { background-color: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.4); color: #4ade80; box-shadow: inset 0 0 15px rgba(34, 197, 94, 0.05); }
+.fallo { background-color: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); color: #f87171; }
+.masomenos { background-color: rgba(234, 179, 8, 0.1); border: 1px solid rgba(234, 179, 8, 0.4); color: #facc15; box-shadow: inset 0 0 15px rgba(234, 179, 8, 0.05); }
 
 .acierto small { color: rgba(74, 222, 128, 0.8); }
 .fallo small { color: rgba(248, 113, 113, 0.8); }
@@ -418,12 +412,11 @@ h1 {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(5px);
     display: flex;

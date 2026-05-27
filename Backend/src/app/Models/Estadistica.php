@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-
 class Estadistica extends Model
 {
     protected $table = 'estadisticas';
@@ -12,9 +11,14 @@ class Estadistica extends Model
 
     protected $fillable = [
         'id_usuario',
+        'modo_juego',
         'partidas_jugadas',
         'partidas_ganadas',
-        'racha',
+        'historial_intentos',
+    ];
+
+    protected $casts = [
+        'historial_intentos' => 'array',
     ];
 
     public function user()

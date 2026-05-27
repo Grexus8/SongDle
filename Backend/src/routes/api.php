@@ -24,5 +24,6 @@ Route::apiResource('albums', AlbumController::class);
 Route::apiResource('songs', SongController::class);
 
 //Route Estadisticas
-Route::apiResource('estadisticas', EstadisticaController::class);
-
+Route::get('/estadisticas', [EstadisticaController::class, 'index']);
+Route::get('/estadisticas/usuario/{id_usuario}', [EstadisticaController::class, 'porUsuario']);
+Route::post('/estadisticas', [EstadisticaController::class, 'store']);

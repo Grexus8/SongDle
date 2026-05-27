@@ -10,12 +10,14 @@ return new class extends Migration
     {
         Schema::create('estadisticas', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('id_usuario');
+            $table->string('modo_juego');
             $table->integer('partidas_jugadas')->default(0);
             $table->integer('partidas_ganadas')->default(0);
-            $table->integer('racha')->default(0);
-            $table->unsignedBigInteger('id_usuario');
+            $table->json('historial_intentos')->nullable();
             
-            $table->foreign('id_usuario') ->references('id_usuario')  ->on('users') ->onDelete('cascade');
+            $table->unique(['id_usuario', 'modo_juego']);
+            $table->foreign('id_usuario')->references('id_usuario')->on('users')->onDelete('cascade');
         });
     }
 

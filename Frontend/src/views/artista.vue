@@ -1,12 +1,16 @@
 <script setup>
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router'; 
 
+const router = useRouter();
 const busqueda = ref("");
 const listarArtistas = ref([]);
 const artistSecreto = ref(null);
 const mostrarModalGanador = ref(false);
 const mostrarModalPerdedor = ref(false);
+const victoria = ref(false);
+const modo = 'artista';
 const intentos = ref([]);
 
 onMounted(async () => {
@@ -24,16 +28,14 @@ onMounted(async () => {
 });
 
 const artistasFiltrados = computed(() => {
-    if (busqueda.value === "") return []; 
+    if (busqueda.value.trim() === "") return []; 
 
-    const buscar = busqueda.value.toLowerCase();
+    const terminosBusqueda = busqueda.value.toLowerCase().split(' ').filter(t => t !== '');
 
     return listarArtistas.value.filter(artista => {
         const yaIntentado = intentos.value.some(i => i.id_artista === artista.id_artista);
-        
-        const palabras = artista.nombre.toLowerCase().split(' ');
-        const coincide = palabras.some(palabra => palabra.startsWith(buscar));
-
+        const textoCompleto = artista.nombre.toLowerCase();
+        const coincide = terminosBusqueda.every(termino => textoCompleto.includes(termino));
         return coincide && !yaIntentado;
     });
 });
@@ -41,12 +43,29 @@ const artistasFiltrados = computed(() => {
 const seleccionar = (artista) => {
     intentos.value.unshift(artista);
     busqueda.value = "";
+
     if (artista.id_artista === artistSecreto.value.id_artista) {
+        victoria.value = true;
         mostrarModalGanador.value = true; 
     } 
     else if (intentos.value.length >= 10) {
         mostrarModalPerdedor.value = true;
     }
+}
+
+const PartidaJugada = () => {
+    const userStorage = localStorage.getItem('user');
+    const userId = userStorage ? JSON.parse(userStorage).id_usuario : null;
+
+    router.push({
+        name: 'estadisticas',
+        params: { id: userId },
+        query: { 
+            partida: intentos.value.length,
+            victoria: victoria.value,
+            modo: modo
+        }
+    });
 }
 
 const obtenerClasePremios = (intentoPremios, secretoPremios) => {
@@ -151,7 +170,7 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
                 <div class="caja-dato" :class="intento.oyentes_mensuales === artistSecreto.oyentes_mensuales ? 'acierto' : 'fallo'">
                     <small>Oyentes</small>
                     <span>
-                        {{ intento.oyentes_mensuales }}
+                        {{ intento.oyentes_mensuales?.toLocaleString() }}
                         <span v-if="intento.oyentes_mensuales < artistSecreto.oyentes_mensuales" class="flecha">
                             <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                         </span>
@@ -168,14 +187,12 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
 
             </div>
         </div>
+
         <Teleport to="body">
             <div v-if="mostrarModalGanador" class="modal-overlay"> 
                 <div class="modal-content" @click.stop>
                     <h2>¡FELICIDADES HAS GANADO!</h2>
-                    
-                    <RouterLink to="/">
-                        <button class="btn-volver-inicio">Volver al inicio</button>
-                    </RouterLink>
+                    <button class="btn-volver-inicio" @click="PartidaJugada">Ver estadísticas</button>
                 </div>
             </div>
         </Teleport>
@@ -183,10 +200,7 @@ const obtenerClasePremios = (intentoPremios, secretoPremios) => {
             <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
                 <div class="modal-content" @click.stop>
                     <h2>HAS PERDIDO</h2>
-                    
-                    <RouterLink to="/">
-                        <button class="btn-volver-inicio">Volver al inicio</button>
-                    </RouterLink>
+                    <button class="btn-volver-inicio" @click="PartidaJugada">Ver estadísticas</button>
                 </div>
             </div>
         </Teleport>
@@ -367,10 +381,7 @@ h1 {
     justify-content: center;
 }
 
-.flecha {
-    display: inline-block;
-    margin-left: 4px;
-}
+.flecha { display: inline-block; margin-left: 4px; }
 
 .icono-flecha {
     width: 18px;
@@ -390,8 +401,6 @@ h1 {
     from { opacity: 0; transform: translateY(15px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-/* MODALES Y TOGGLE (Integrados con tu diseño) */
 
 .modal-overlay {
     position: fixed;
@@ -439,58 +448,5 @@ h1 {
     transition: transform 0.2s;
 }
 
-.btn-volver-inicio:hover {
-    transform: translateY(-2px);
-}
-
-/* Toggle Dificil Ajustado */
-.dificultad-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  background-color: rgba(139, 92, 246, 0.05); 
-  border: 1px solid rgba(139, 92, 246, 0.3);
-  padding: 1rem;
-  border-radius: 12px;
-  margin: 20px auto;
-  max-width: 300px;
-}
-
-.dificultad-texto {
-  color: #d8b4fe;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 50px;
-  height: 26px;
-}
-
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-
-.slider {
-  position: absolute; cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #334155;
-  transition: .4s; border-radius: 34px;
-}
-
-.slider:before {
-  position: absolute; content: "";
-  height: 18px; width: 18px;
-  left: 4px; bottom: 4px;
-  background-color: white;
-  transition: .4s; border-radius: 50%;
-}
-
-input:checked + .slider {
-  background: linear-gradient(135deg, #8b5cf6, #ec4899);
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
-}
+.btn-volver-inicio:hover { transform: translateY(-2px); }
 </style>

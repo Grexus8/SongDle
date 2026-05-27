@@ -12,10 +12,9 @@ const Dificil = ref(false)
 const Seleccionaralbum = ref(false)
 const cancionClasico = ref(false)
 const cancionFiltrado = ref(false)
-const albumClasico = ref(false)
-const albumFiltrado = ref(false)
 const artistas = ref([])
-
+const userStorage = localStorage.getItem('user');
+const userId = userStorage ? JSON.parse(userStorage).id_usuario : null;
 const dropdownAbierto = ref(false);
 const artistaSeleccionadoNombre = ref('');
 
@@ -38,10 +37,10 @@ const JugarCancionFiltrada = () => {
   })
 }
 
-const JugarModoDificil = (modo) => {
+const JugarCancionDificil = () => {
   router.push({
-      name: `${modo}`,
-      query: { Dificil: Dificil.value }
+      name:'cancion',
+      query: {Dificil:Dificil.value}
   })
 }
 
@@ -62,7 +61,9 @@ onMounted(() => {
             <line x1="12" y1="20" x2="12" y2="4"></line>
             <line x1="6" y1="20" x2="6" y2="14"></line>
           </svg>
-          <span class="icon-text">ESTADÍSTICAS</span>
+          <RouterLink :to="{ name: 'estadisticas', params: { id: userId } }">
+              <span class="icon-text">ESTADÍSTICAS</span>
+          </RouterLink>
         </div>
       </div>
       
@@ -158,7 +159,7 @@ onMounted(() => {
             </div>
 
             <div class="play-wrapper">
-                <button v-if="cancionClasico || cancionFiltrado" @click="cancionClasico ? JugarModoDificil() : JugarModoDificil()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
+                <button v-if="cancionClasico || cancionFiltrado" @click="cancionClasico ? JugarCancionDificil() : JugarCancionFiltrada()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
             </div>
           </div>
 
@@ -610,5 +611,12 @@ input:checked + .slider:before {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+.icon-group a {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: center;
 }
 </style>

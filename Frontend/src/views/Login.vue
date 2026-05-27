@@ -16,7 +16,7 @@ const iniciarSesion = async () => {
             password: contrasena.value
         });
         localStorage.setItem('token', respuesta.data.token);
-        localStorage.setItem('user',JSON.stringify(respuesta.data.name))
+        localStorage.setItem('user', JSON.stringify(respuesta.data.user))
         axios.defaults.headers.common['Authorization'] = `Bearer ${respuesta.data.token}`;
         router.push('/'); 
 
