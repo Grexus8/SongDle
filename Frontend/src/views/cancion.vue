@@ -55,7 +55,7 @@ const seleccionar = (cancion) => {
     busqueda.value = "";
 
     if (cancion.id_song === cancionSecreta.value.id_song) {
-        victoria.value = true; // ← AÑADIDO
+        victoria.value = true;
         mostrarModalGanador.value = true; 
     } 
     else if (Dificil && intentos.value.length >= 5) {

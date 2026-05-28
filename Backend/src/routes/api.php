@@ -7,6 +7,7 @@ use App\Http\Controllers\AlbumController;
 use App\Http\Controllers\SongController;
 use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\ArcadeController;
 
 // 1. Autenticación
 Route::prefix('auth')->name('auth.')->group(function (){
@@ -27,3 +28,5 @@ Route::apiResource('songs', SongController::class);
 Route::get('/estadisticas', [EstadisticaController::class, 'index']);
 Route::get('/estadisticas/usuario/{id_usuario}', [EstadisticaController::class, 'porUsuario']);
 Route::post('/estadisticas', [EstadisticaController::class, 'store']);
+//Route Arcade
+Route::post('/arcade/guardar-partida/{id}', [ArcadeController::class, 'guardarPartida']);

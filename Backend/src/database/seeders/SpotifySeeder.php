@@ -121,7 +121,9 @@ class SpotifySeeder extends Seeder
     ];
 
     // ── Config ────────────────────────────────────────────────────
-    private int $maxTracks = 15;
+    private int $maxTracksPerAlbum  = 100; // máx canciones por álbum
+    private int $maxTracksPerArtist = 15; // máx canciones totales por artista
+    private int $minTracksPerAlbum  = 5;   // álbumes con menos canciones se descartan
 
     // ─────────────────────────────────────────────────────────────
 
@@ -186,23 +188,43 @@ class SpotifySeeder extends Seeder
         $selected = $releases;
 
         // Actualizar debut con el álbum más antiguo
+        $oldest    = $selected[0] ?? null;
         $debutYear = $this->extractYear($oldest['date'] ?? null);
         if ($debutYear > 1900) {
             DB::table('artists')->where('id_artista', $artistDbId)->update(['debut' => $debutYear]);
         }
 
-        $country = $this->resolveCountry($artistData['country'] ?? null, $artistData['tags'] ?? []);
+        $areaName = $artistData['area']['name'] ?? $artistData['begin-area']['name'] ?? null;
+        $country  = $this->resolveCountry($artistData['country'] ?? null, $artistData['tags'] ?? [], $areaName);
         $genre   = $this->extractGenre($artistData['tags'] ?? []);
 
+        $totalSongsInserted = 0;
+
         foreach ($selected as $release) {
+            if ($totalSongsInserted >= $this->maxTracksPerArtist) break;
             if (empty($release['id'])) continue;
+
             $releaseDetail = $this->getRelease($release['id']);
             if (!$releaseDetail) continue;
+
+            // Contar canciones del álbum antes de insertarlo
+            $trackCount = 0;
+            foreach (($releaseDetail['media'] ?? []) as $medium) {
+                $trackCount += count($medium['tracks'] ?? []);
+            }
+
+            // Descartar álbumes con menos del mínimo de canciones
+            if ($trackCount < $this->minTracksPerAlbum) continue;
 
             $albumDbId = $this->insertAlbum($releaseDetail, $artistDbId);
             if (!$albumDbId) continue;
 
-            $this->insertTracks($releaseDetail, $artistDbId, $albumDbId, $country, $genre);
+            $inserted = $this->insertTracks(
+                $releaseDetail, $artistDbId, $albumDbId,
+                $country, $genre,
+                $this->maxTracksPerArtist - $totalSongsInserted
+            );
+            $totalSongsInserted += $inserted;
         }
     }
 
@@ -253,14 +275,14 @@ class SpotifySeeder extends Seeder
 
     private function getRelease(string $releaseId): ?array
     {
-        return $this->mbGet("release/{$releaseId}?inc=recordings+artist-credits&fmt=json");
+        return $this->mbGet("release/{$releaseId}?inc=recordings+artist-credits&fmt=json", 4, 45);
     }
 
     // ─────────────────────────────────────────────────────────────
     //  HTTP
     // ─────────────────────────────────────────────────────────────
 
-    private function mbGet(string $endpoint, int $maxRetries = 4): ?array
+    private function mbGet(string $endpoint, int $maxRetries = 4, int $timeout = 20): ?array
     {
         $url     = "https://musicbrainz.org/ws/2/{$endpoint}";
         $headers = [
@@ -272,7 +294,7 @@ class SpotifySeeder extends Seeder
         $this->requestCount++;
 
         for ($try = 1; $try <= $maxRetries; $try++) {
-            $r = Http::withHeaders($headers)->timeout(20)->get($url);
+            $r = Http::withHeaders($headers)->timeout($timeout)->get($url);
 
             if ($r->status() === 503 || $r->status() === 429) {
                 $wait = 5 * $try;
@@ -302,9 +324,13 @@ class SpotifySeeder extends Seeder
         $existing = DB::table('artists')->where('nombre', $nombre)->value('id_artista');
         if ($existing) return $existing;
 
-        $tags    = $d['tags'] ?? $d['genres'] ?? [];
-        $country = $this->resolveCountry($d['country'] ?? null, $tags);
-        $genre   = $this->extractGenre($tags);
+        $tags = $d['tags'] ?? $d['genres'] ?? [];
+
+        // MusicBrainz devuelve el país en area.name o begin-area.name, no en 'country'
+        $areaName   = $d['area']['name'] ?? $d['begin-area']['name'] ?? $d['country'] ?? null;
+        $countryCode = $d['country'] ?? null; // código ISO 2 letras si lo hay
+        $country    = $this->resolveCountry($countryCode, $tags, $areaName);
+        $genre      = $this->extractGenre($tags);
 
         $debutYear = (int)($d['life-span']['begin'] ?? now()->year);
         if ($debutYear < 1900 || $debutYear > (int)now()->year) {
@@ -362,18 +388,19 @@ class SpotifySeeder extends Seeder
         return $id;
     }
 
-    private function insertTracks(array $album, int $artistId, int $albumId, string $country, string $genre): void
+    private function insertTracks(array $album, int $artistId, int $albumId, string $country, string $genre, int $remaining = 100): int
     {
         $date  = $album['date'] ?? null;
         $year  = $this->extractYear($date);
         $fecha = $this->parseDate($date);
 
+        $limit = min($this->maxTracksPerAlbum, $remaining);
         $rows  = [];
         $count = 0;
 
         foreach (($album['media'] ?? []) as $medium) {
             foreach (($medium['tracks'] ?? []) as $track) {
-                if ($count >= $this->maxTracks) break 2;
+                if ($count >= $limit) break 2;
 
                 $titulo = $track['title'] ?? ($track['recording']['title'] ?? null);
                 if (!$titulo) continue;
@@ -398,6 +425,8 @@ class SpotifySeeder extends Seeder
         }
 
         if (!empty($rows)) DB::table('songs')->insert($rows);
+
+        return count($rows); // devuelve cuántas canciones se insertaron realmente
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -408,18 +437,48 @@ class SpotifySeeder extends Seeder
      * Convierte un código ISO o nombre de área en nombre completo del país.
      * Si MusicBrainz devuelve un objeto area, usamos area.name directamente.
      */
-    private function resolveCountry(?string $code, array $tags): string
+    private function resolveCountry(?string $code, array $tags, ?string $areaName = null): string
     {
-        if (!$code) return $this->guessCountryFromTags($tags);
-
-        // Si es un código ISO de 2 letras
-        if (strlen($code) === 2 && isset($this->countryCodes[strtoupper($code)])) {
+        // 1. Código ISO directo (ej: "PR", "CO", "ES")
+        if ($code && strlen($code) === 2 && isset($this->countryCodes[strtoupper($code)])) {
             return $this->countryCodes[strtoupper($code)];
         }
 
-        // Si MusicBrainz ya devuelve el nombre completo (algunos artistas lo hacen)
-        if (strlen($code) > 2) return $code;
+        // 2. area.name de MusicBrainz (ej: "Puerto Rico", "Colombia", "Spain")
+        if ($areaName) {
+            // Traducir nombres en inglés comunes
+            $translations = [
+                'Puerto Rico'      => 'Puerto Rico',
+                'Colombia'         => 'Colombia',
+                'Argentina'        => 'Argentina',
+                'Spain'            => 'España',
+                'Mexico'           => 'México',
+                'Dominican Republic' => 'República Dominicana',
+                'United States'    => 'Estados Unidos',
+                'Venezuela'        => 'Venezuela',
+                'Panama'           => 'Panamá',
+                'Cuba'             => 'Cuba',
+                'Honduras'         => 'Honduras',
+                'Jamaica'          => 'Jamaica',
+                'Chile'            => 'Chile',
+                'Peru'             => 'Perú',
+                'Uruguay'          => 'Uruguay',
+                'Brazil'           => 'Brasil',
+                'France'           => 'Francia',
+                'Germany'          => 'Alemania',
+                'Italy'            => 'Italia',
+                'United Kingdom'   => 'Reino Unido',
+                'Australia'        => 'Australia',
+                'Canada'           => 'Canadá',
+                'Japan'            => 'Japón',
+                'South Korea'      => 'Corea del Sur',
+            ];
+            if (isset($translations[$areaName])) return $translations[$areaName];
+            // Si ya está en español o es reconocible, devolverlo directamente
+            if (strlen($areaName) > 2) return $areaName;
+        }
 
+        // 3. Inferir de tags
         return $this->guessCountryFromTags($tags);
     }
 

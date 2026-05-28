@@ -7,6 +7,7 @@ import Login from '../views/Login.vue';
 import Register from '../views/Register.vue';
 import Estadisticas from '../views/Estadisticas.vue';
 import Perfil from '../views/Perfil.vue';
+import Arcade from '../views/Arcade.vue';
 
 const routes = [
   {
@@ -56,7 +57,13 @@ const routes = [
     name: 'perfil',
     component: Perfil,
     meta: { requiresAuth: true } // Ruta protegida
-  }
+  },
+  {
+    path: '/arcade',          
+    name: 'arcade',
+    component: Arcade,
+    meta: { requiresAuth: true } // Ruta protegida
+  },
 ]
 
 const router = createRouter({
