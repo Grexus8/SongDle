@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
-const usuarios = ref([]);
-const newUser = ref();
+const router = useRouter();
 const name = ref('');
 const email = ref('');
 const phone = ref('');
@@ -13,19 +13,6 @@ const profile = ref(null);
 const mensajeError = ref('');
 const mensajeExito = ref('');
 
-const listarUsuarios = async () => {
-    try {
-        const respuesta = await axios.get('http://localhost:8080/api/users');
-        usuarios.value = respuesta.data; 
-    } catch (error) {
-        console.error("Error al cargar los usuarios:", error);
-    }
-}
-
-onMounted(() => {
-    listarUsuarios();
-});
-
 const capturarFoto = (event) => {
     profile.value = event.target.files[0];
 }
@@ -33,17 +20,6 @@ const capturarFoto = (event) => {
 const crearusuario = async () => {
     mensajeError.value = '';
     mensajeExito.value = '';
-
-    for (const usuario of usuarios.value) {
-        if (name.value === usuario.name) {
-            mensajeError.value = "El nombre de usuario ya existe.";
-            return; 
-        } 
-        else if (email.value === usuario.email) {
-            mensajeError.value = "Este correo electrónico ya está en uso.";
-            return; 
-        }
-    }
 
     try {
         const formData = new FormData();
@@ -57,27 +33,31 @@ const crearusuario = async () => {
         if (profile.value) {
             formData.append('profile_img', profile.value);
         }
+        console.log("Archivo listo para enviar a Laravel:", profile.value);
 
-        const respuesta = await axios.post('http://localhost:8080/api/auth/register', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data' 
-            }
-        });
-        
-        newUser.value = respuesta.data;
-        mensajeExito.value = "¡Usuario creado con éxito! Ya puedes iniciar sesión.";
-        
-        name.value = '';
-        email.value = '';
-        phone.value = '';
-        password.value = '';
-        profile.value = null;
+        // Enviamos el formData directamente, sin headers manuales
+        const response = await axios.post('http://localhost:8080/api/auth/register', formData);
 
-        listarUsuarios();
+        const token = response.data.token;
+        const user  = response.data.user;
+
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        mensajeExito.value = "¡Usuario creado con éxito! Redirigiendo...";
+
+        setTimeout(() => {
+            router.push({ name: 'perfil', params: { id: user.id_usuario } });
+        }, 1000);
 
     } catch (error) {
         console.error("Error al crear el usuario:", error);
-        mensajeError.value = "Ha ocurrido un error al conectar con el servidor.";
+        
+        if (error.response && error.response.status === 422) {
+            mensajeError.value = "El correo electrónico o el nombre de usuario ya están en uso.";
+        } else {
+            mensajeError.value = "Ha ocurrido un error al conectar con el servidor.";
+        }
     }
 }
 </script>
@@ -111,7 +91,6 @@ const crearusuario = async () => {
                 <label>Contraseña</label>
                 <input type="password" v-model="password" placeholder="••••••••" class="custom-input">
             </div>
-            
             <div class="input-group">
                 <label>Foto de perfil</label>
                 <input type="file" @change="capturarFoto" accept="image/*" class="custom-file-input">
@@ -233,6 +212,7 @@ const crearusuario = async () => {
 
 .custom-input::placeholder { color: #475569; }
 
+/* NUEVOS ESTILOS PARA EL INPUT DE ARCHIVO */
 .custom-file-input {
     width: 100%;
     background-color: #0b0d14;
@@ -263,6 +243,7 @@ const crearusuario = async () => {
     box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
     transform: translateY(-1px);
 }
+/* FIN NUEVOS ESTILOS */
 
 .play-btn-gradient {
     background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
@@ -286,9 +267,7 @@ const crearusuario = async () => {
     box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.6);
 }
 
-.play-btn-gradient:active {
-    transform: translateY(1px);
-}
+.play-btn-gradient:active { transform: translateY(1px); }
 
 .login-link {
     text-align: center;

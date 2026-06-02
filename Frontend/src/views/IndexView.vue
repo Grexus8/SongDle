@@ -10,6 +10,7 @@ const Seleccionarcancion = ref(false)
 const Seleccionarartista = ref(false)
 const Dificil = ref(false)
 const Seleccionaralbum = ref(false)
+const SeleccionarArcade = ref(false)
 const cancionClasico = ref(false)
 const cancionFiltrado = ref(false)
 const artistas = ref([])
@@ -65,6 +66,20 @@ onMounted(() => {
               <span class="icon-text">ESTADÍSTICAS</span>
           </RouterLink>
         </div>
+
+        <div class="icon-group group-stats">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="nav-icon">
+                <path d="M8 21h8"></path>
+                <path d="M12 17v4"></path>
+                <path d="M7 4h10"></path>
+                <path d="M17 4v8a5 5 0 0 1-10 0V4"></path>
+                <path d="M7 9H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2"></path>
+                <path d="M17 9h2a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2h-2"></path>
+            </svg>
+            <RouterLink :to="{ name: 'ranking'}">
+                <span class="icon-text">RANKING</span>
+            </RouterLink>
+        </div>
       </div>
       
       <div class="header-center">
@@ -74,7 +89,10 @@ onMounted(() => {
       
       <div class="header-right">
         <div class="avatar-circle">
-          <span class="avatar-icon">👤</span>
+          
+          <RouterLink :to="{ name: 'perfil', params: { id: userId } }">
+                <span class="avatar-icon">👤</span>
+            </RouterLink>
         </div>
       </div>
     </header>
@@ -84,31 +102,38 @@ onMounted(() => {
         
         <nav class="tabs-container">
           <button 
-            @click="Seleccionarcancion = true, Seleccionaralbum = false, Seleccionarartista = false" 
+            @click="Seleccionarcancion = true, Seleccionaralbum = false, Seleccionarartista = false, SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionarcancion }"
           >
             Canción
           </button>
           <button 
-            @click="Seleccionarcancion = false, Seleccionaralbum = false, Seleccionarartista = true" 
+            @click="Seleccionarcancion = false, Seleccionaralbum = false, Seleccionarartista = true, SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionarartista }"
           >
             Artista
           </button>
           <button 
-            @click="Seleccionaralbum = true, Seleccionarartista = false, Seleccionarcancion = false" 
+            @click="Seleccionaralbum = true, Seleccionarartista = false, Seleccionarcancion = false, SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionaralbum }"
           >
             Álbum
           </button>
+          <button 
+            @click="Seleccionaralbum = false, Seleccionarartista = false, Seleccionarcancion = false, SeleccionarArcade = true" 
+            class="tab-btn" 
+            :class="{ active: SeleccionarArcade }"
+          >
+            Arcade
+          </button>
         </nav>
 
         <div class="card-content">
           
-          <div v-if="!Seleccionarcancion && !Seleccionarartista && !Seleccionaralbum" class="step-1-neutral">
+          <div v-if="!Seleccionarcancion && !Seleccionarartista && !Seleccionaralbum && !SeleccionarArcade" class="step-1-neutral">
             <p class="instruction-text">Paso 1: Elige tu categoría para empezar.</p>
           </div>
 
@@ -162,7 +187,6 @@ onMounted(() => {
                 <button v-if="cancionClasico || cancionFiltrado" @click="cancionClasico ? JugarCancionDificil() : JugarCancionFiltrada()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
             </div>
           </div>
-
           <div v-if="Seleccionarartista" class="step-animation">
             <p class="step-title">Paso 2: Elige el Modo de Juego</p>
             <div class="single-mode-wrapper">
@@ -174,6 +198,13 @@ onMounted(() => {
             <p class="step-title">Paso 2: Elige el Modo de Juego</p>
             <div class="single-mode-wrapper">
               <RouterLink to="album" class="mode-link"><button class="play-btn-gradient">JUGAR MODO ALBUM</button></RouterLink>
+            </div>
+          </div>
+
+          <div v-if="SeleccionarArcade" class="step-animation">
+            <p class="step-title">Paso 2: Elige el Modo de Juego</p>
+            <div class="single-mode-wrapper">
+              <RouterLink to="Arcade" class="mode-link"><button class="play-btn-gradient">JUGAR ARCADE</button></RouterLink>
             </div>
           </div>
 

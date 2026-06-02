@@ -9,24 +9,29 @@ use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ArcadeController;
 
-// 1. Autenticación
+// 1. Autenticación (Registro y Login)
 Route::prefix('auth')->name('auth.')->group(function (){
     Route::post('/register', [AuthController::class, 'createUser'])->name('register');
     Route::post('/login', [AuthController::class, 'loginUser'])->name('login');
 });
-Route::apiResource('users', UserController::class);
-//Route Artista
+
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::apiResource('users', UserController::class)->except(['store']);
+});
+
+// 3. Recursos de Música (Artista, Álbum, Canción)
 Route::apiResource('artists', ArtistController::class);
-
-//Route Album
 Route::apiResource('albums', AlbumController::class);
-
-//Route Song
 Route::apiResource('songs', SongController::class);
 
-//Route Estadisticas
+// 4. Estadísticas
 Route::get('/estadisticas', [EstadisticaController::class, 'index']);
 Route::get('/estadisticas/usuario/{id_usuario}', [EstadisticaController::class, 'porUsuario']);
 Route::post('/estadisticas', [EstadisticaController::class, 'store']);
-//Route Arcade
+
+// 5. Arcade
 Route::post('/arcade/guardar-partida/{id}', [ArcadeController::class, 'guardarPartida']);
+Route::get('/arcade/ranking-puntos', [ArcadeController::class, 'obtenerRankingPuntos']);
+Route::get('/arcade/ranking-canciones', [ArcadeController::class, 'obtenerRankingCanciones']);
+Route::get('/arcade/record/{id}', [ArcadeController::class, 'obtenerRecordUsuario']);

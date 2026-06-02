@@ -16,9 +16,9 @@ return new class extends Migration
 
             $table->string('name')->unique();
             $table->string('email')->unique();
-            $table->string('phone')->nullable(); // Añadido para el teléfono
+            $table->string('phone')->nullable();
             $table->string('password');
-            $table->string('profile_img')->nullable(); // Añadido para guardar la imagen directamente
+            $table->string('profile_img')->nullable(); // Añadido
             $table->date('registration_date');
             $table->boolean('administrador')->default(false);
         });

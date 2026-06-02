@@ -1,67 +1,56 @@
 <script setup>
 import axios from 'axios';
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { useRouter } from 'vue-router';
+import { useRouter } from 'vue-router'; 
 
-const router = useRouter()
-const route = useRoute()
+const router = useRouter();
 const busqueda = ref("");
-const listarCanciones = ref([]);
-const cancionSecreta = ref(null);
+const listarAlbums = ref([]);
+const albumSecreto = ref(null);
 const mostrarModalGanador = ref(false);
 const mostrarModalPerdedor = ref(false);
+const victoria = ref(false);
 const intentos = ref([]);
 const modo = 'album';
-const victoria = ref(false);
 const userStorage = localStorage.getItem('user');
 const userId = userStorage ? JSON.parse(userStorage).id_usuario : null;
-const Dificil = route.query.Dificil === 'true';
 
 onMounted(async () => {
     try {
-        const id = route.params.id
-        let url = 'http://localhost:8080/api/songs'
-        if (id) {
-            url = url + '?id_artista=' + id
-        }
-        const cargar = await axios.get(url);
-        listarCanciones.value = cargar.data;
+        const cargar = await axios.get('http://localhost:8080/api/albums');
+        listarAlbums.value = cargar.data;
 
-        const aleatorio = Math.floor(Math.random() * listarCanciones.value.length);
-        cancionSecreta.value = listarCanciones.value[aleatorio];
-        
-        console.log("🤫 La canción secreta es:", cancionSecreta.value.titulo);
+        if (listarAlbums.value.length > 0) {
+            const aleatorio = Math.floor(Math.random() * listarAlbums.value.length);
+            albumSecreto.value = listarAlbums.value[aleatorio];
+            console.log("🤫 El álbum secreto es:", albumSecreto.value.nombre);
+        }
     } catch (error) {
-        console.error("Error cargando canciones:", error);
+        console.error("Error cargando álbums:", error);
     }
 });
 
-const cancionesFiltradas = computed(() => {
-    if (busqueda.value.trim() === "") return []; 
+const albumsFiltrados = computed(() => {
+    if (busqueda.value.trim() === "") return [];
 
     const terminosBusqueda = busqueda.value.toLowerCase().split(' ').filter(t => t !== '');
 
-    return listarCanciones.value.filter(cancion => {
-        const yaIntentado = intentos.value.some(i => i.id_song === cancion.id_song);
-        const textoCompleto = `${cancion.titulo} ${cancion.artist?.nombre || ''}`.toLowerCase();
+    return listarAlbums.value.filter(album => {
+        const yaIntentado = intentos.value.some(i => i.id_album === album.id_album);
+        const textoCompleto = `${album.nombre} ${album.artist?.nombre || ''}`.toLowerCase();
         const coincide = terminosBusqueda.every(termino => textoCompleto.includes(termino));
         return coincide && !yaIntentado;
     });
 });
 
-const seleccionar = (cancion) => {
-    intentos.value.unshift(cancion);
+const seleccionar = (album) => {
+    intentos.value.unshift(album);
     busqueda.value = "";
-
-    if (cancion.id_song === cancionSecreta.value.id_song) {
+    if (album.id_album === albumSecreto.value.id_album) {
         victoria.value = true;
         mostrarModalGanador.value = true; 
     } 
-    else if (Dificil && intentos.value.length >= 5) {
-        mostrarModalPerdedor.value = true;
-    }
-    else if (!Dificil && intentos.value.length >= 10) {
+    else if (intentos.value.length >= 5) {
         mostrarModalPerdedor.value = true;
     }
 }
@@ -78,105 +67,105 @@ const PartidaJugada = () => {
     });
 }
 
-const obtenerClaseMultiple = (intentoValor, secretoValor) => {
-    if (!intentoValor || !secretoValor) return 'fallo';
-    if (intentoValor === secretoValor) return 'acierto';
-
-    const arrayIntento = String(intentoValor).split(',').map(p => p.trim().toLowerCase());
-    const arraySecreto = String(secretoValor).split(',').map(p => p.trim().toLowerCase());
-
-    const coincidencias = arrayIntento.filter(v => arraySecreto.includes(v));
-
-    if (coincidencias.length === arraySecreto.length && arrayIntento.length === arraySecreto.length) {
-        return 'acierto';
-    } else if (coincidencias.length > 0) {
-        return 'masomenos';
-    } else {
-        return 'fallo';
-    }
+const getAnio = (fecha) => {
+    if (!fecha) return 0;
+    return new Date(fecha).getFullYear();
 }
 </script>
 
 <template>
     <div class="contenedor-juego">
         
-        <RouterLink to="/" class="btn-volver" title="Volver al inicio">
+        <RouterLink to="/" class="btn-volver" title="Volver a Inicio">
             <svg xmlns="http://www.w3.org/2000/svg" class="icono-volver">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </RouterLink>
 
-        <h1>SongDle - Canciones</h1>
+        <h1>SongDle - Álbums</h1>
         
         <div class="buscador-wrapper">
             <input 
                 type="text" 
                 v-model="busqueda" 
-                placeholder="Escribe el nombre de una canción..."
+                placeholder="Escribe el nombre de un álbum..."
                 class="input-buscador"
             >
             
-            <ul v-if="cancionesFiltradas.length > 0" class="lista-resultados">
+            <ul v-if="albumsFiltrados.length > 0" class="lista-resultados">
                 <li 
-                    v-for="cancion in cancionesFiltradas" 
-                    :key="cancion.id_song" 
-                    @click="seleccionar(cancion)"
+                    v-for="album in albumsFiltrados" 
+                    :key="album.id_album" 
+                    @click="seleccionar(album)"
                     class="item-lista"
                 > 
-                    {{ cancion.titulo }} - {{ cancion.artist?.nombre }}
+                    {{ album.nombre }} - {{ album.artist?.nombre }}
                 </li>
             </ul>
         </div>
 
-        <p v-if="cancionesFiltradas.length === 0 && busqueda !== ''" class="no-results">
+        <p v-if="albumsFiltrados.length === 0 && busqueda !== ''" class="no-results">
             No se encontraron coincidencias
         </p>
 
         <div class="historial-intentos">
-            <div v-for="intento in intentos" :key="intento.id_song" class="fila-comparacion">
+            <div v-for="intento in intentos" :key="intento.id_album" class="fila-comparacion">
                 
-                <div class="caja-dato" :class="intento.titulo === cancionSecreta.titulo ? 'acierto' : 'fallo'">
-                    <small>Título</small>
-                    <span>{{ intento.titulo }}</span>
+                <div class="caja-dato" :class="intento.nombre === albumSecreto.nombre ? 'acierto' : 'fallo'">
+                    <small>Álbum</small>
+                    <span>{{ intento.nombre }}</span>
                 </div>
 
-                <div class="caja-dato" :class="intento.id_artista === cancionSecreta.id_artista ? 'acierto' : 'fallo'">
+                <div class="caja-dato" :class="intento.id_artista === albumSecreto.id_artista ? 'acierto' : 'fallo'">
                     <small>Artista</small>
                     <span>{{ intento.artist?.nombre || 'Desconocido' }}</span>
                 </div>
 
-                <div class="caja-dato" :class="intento.pais === cancionSecreta.pais ? 'acierto' : 'fallo'">
-                    <small>País</small>
-                    <span>{{ intento.pais }}</span>
-                </div>
-
-                <div class="caja-dato" :class="obtenerClaseMultiple(intento.genero, cancionSecreta.genero)">
-                    <small>Género</small>
-                    <span>{{ intento.genero }}</span>
-                </div>
-
-                <div class="caja-dato" :class="intento.anio === cancionSecreta.anio ? 'acierto' : 'fallo'">
+                <div class="caja-dato" :class="getAnio(intento.fecha_lanzamiento) === getAnio(albumSecreto.fecha_lanzamiento) ? 'acierto' : 'fallo'">
                     <small>Año</small>
                     <span>
-                        {{ intento.anio }}
-                        <span v-if="intento.anio < cancionSecreta.anio" class="flecha">
+                        {{ getAnio(intento.fecha_lanzamiento) }}
+                        <span v-if="getAnio(intento.fecha_lanzamiento) < getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
                             <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                         </span>
-                        <span v-else-if="intento.anio > cancionSecreta.anio" class="flecha">
+                        <span v-else-if="getAnio(intento.fecha_lanzamiento) > getAnio(albumSecreto.fecha_lanzamiento)" class="flecha">
                             <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
                         </span>
                     </span>
                 </div>
 
-                <div class="caja-dato" :class="intento.reproducciones === cancionSecreta.reproducciones ? 'acierto' : 'fallo'">
-                    <small>Reproducciones</small>
+                <div class="caja-dato" :class="intento.cantidad_canciones === albumSecreto.cantidad_canciones ? 'acierto' : 'fallo'">
+                    <small>Canciones</small>
                     <span>
-                        {{ intento.reproducciones.toLocaleString() }}
-                        <span v-if="intento.reproducciones < cancionSecreta.reproducciones" class="flecha">
+                        {{ intento.cantidad_canciones }}
+                        <span v-if="intento.cantidad_canciones < albumSecreto.cantidad_canciones" class="flecha">
                             <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
                         </span>
-                        <span v-else-if="intento.reproducciones > cancionSecreta.reproducciones" class="flecha">
+                        <span v-else-if="intento.cantidad_canciones > albumSecreto.cantidad_canciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+                        </span>
+                    </span>
+                </div>
+
+                <div class="caja-dato" :class="Boolean(intento.colaboraciones) === Boolean(albumSecreto.colaboraciones) ? 'acierto' : 'fallo'">
+                    <small>Feat.</small>
+                    <span>{{ intento.colaboraciones ? 'Sí' : 'No' }}</span>
+                </div>
+
+                <div class="caja-dato" :class="intento.premios === albumSecreto.premios ? 'acierto' : 'fallo'">
+                    <small>Premios</small>
+                    <span>{{ intento.premios ?? 'Ninguno' }}</span>
+                </div>
+
+                <div class="caja-dato" :class="intento.reproducciones === albumSecreto.reproducciones ? 'acierto' : 'fallo'">
+                    <small>Streams</small>
+                    <span>
+                        {{ intento.reproducciones?.toLocaleString() }}
+                        <span v-if="intento.reproducciones < albumSecreto.reproducciones" class="flecha">
+                            <svg class="icono-flecha"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+                        </span>
+                        <span v-else-if="intento.reproducciones > albumSecreto.reproducciones" class="flecha">
                             <svg class="icono-flecha"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
                         </span>
                     </span>
@@ -262,7 +251,6 @@ h1 {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     text-shadow: 0 4px 20px rgba(171, 71, 188, 0.3);
-    letter-spacing: normal;
 }
 
 .buscador-wrapper {
@@ -340,7 +328,7 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-width: 1100px;
+    max-width: 1050px;
     margin: 0 auto;
 }
 
@@ -417,8 +405,8 @@ h1 {
     position: fixed;
     top: 0; left: 0;
     width: 100vw; height: 100vh;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -429,37 +417,35 @@ h1 {
     background-color: #11141d;
     border: 1px solid #ec4899;
     padding: 3rem;
-    border-radius: 16px;
+    border-radius: 20px;
     text-align: center;
-    color: #f8fafc;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-    animation: fadeUp 0.3s ease-out;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     max-width: 400px;
     width: 90%;
+    animation: fadeUp 0.3s ease-out;
 }
 
 .modal-content h2 {
     font-family: 'Dela Gothic One', cursive;
-    font-size: 2rem;
-    margin-top: 0;
+    color: #f8fafc;
     margin-bottom: 2rem;
-    background: linear-gradient(to right, #4ade80, #3b82f6);
+    background: linear-gradient(to right, #ffffff, #d8b4fe);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .btn-volver-inicio {
-    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
     color: white;
     border: none;
     padding: 12px 30px;
-    border-radius: 8px;
+    border-radius: 10px;
     font-weight: 700;
-    font-size: 1.1rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    font-family: inherit;
     width: 100%;
+    font-family: inherit;
+    font-size: 1.1rem;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-volver-inicio:hover {

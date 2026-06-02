@@ -1,8 +1,9 @@
 <script setup>
 import { ref } from 'vue';
-import router from '../routes/routes';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
+const router = useRouter();
 const nombre = ref('');
 const contrasena = ref('');
 const mensajeError = ref('');
@@ -15,14 +16,15 @@ const iniciarSesion = async () => {
             name: nombre.value, 
             password: contrasena.value
         });
+        
         localStorage.setItem('token', respuesta.data.token);
-        localStorage.setItem('user', JSON.stringify(respuesta.data.user))
+        localStorage.setItem('user', JSON.stringify(respuesta.data.user));
+        
         axios.defaults.headers.common['Authorization'] = `Bearer ${respuesta.data.token}`;
         router.push('/'); 
 
     } catch (error) {
         console.error("Error al iniciar sesión", error.response?.data);
-        alert('¡usuario o contraseña no encontrados!')
         
         if (error.response && error.response.status === 401) {
             mensajeError.value = 'Usuario o contraseña incorrectos.';

@@ -1,65 +1,57 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
-use App\Http\Requests\UserRequest;
-use App\Models\Delivery_Point;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Arr;
-
 
 class UserController extends Controller
 {
-
     public function index()
     {
-        // Obtenemos todos los usuarios de la base de datos
         $users = User::all();
-
-        // Devolvemos la respuesta en formato json
-        return response()->json($users);
+        return response()->json($users, 200);
     }
 
-    public function show(Request $request)
+    public function show($id)
     {
-        // Obtenemos un usuario por id
-        $user = $request->user();
+        $user = User::find($id);
         
-        // Comprobamos que el usuario existe
         if (!$user) {
-            return response()->json(['message' => 'No trobat'], 404);
+            return response()->json(['message' => 'Usuari no trobat'], 404);
         }
         
-        // Devolvemos la respuesta en formato json
-        return response()->json($user);
+        return response()->json($user, 200);
     }
 
     public function update(Request $request, $id)
     {
-        // Obtenemos el usuario por id
         $user = User::find($id);
 
-        // Comprobamos que el usuario existe
         if (!$user) {
-            return response()->json(['message' => 'No trobat'], 404);
+            return response()->json(['message' => 'Usuari no trobat'], 404);
         }
 
-        // Validamos los datos antes de insertarlos en la base de datos
         $validated = $request->validate([
-            'name' => 'required|string',
-            'email' => 'required|string',
-            'administrador' => 'required|boolean'
+            'name' => 'sometimes|string',
+            'email' => 'sometimes|string|email|unique:users,email,' . $id . ',id_usuario',
+            'phone' => 'sometimes|string',
+            'password' => 'sometimes|string|min:6',
+            'administrador' => 'sometimes|boolean',
         ]);
 
-        // Actualizamos el usuario definitivamente
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'administrador' => $request->administrador
-        ]);
+        if (isset($validated['name'])) $user->name = $validated['name'];
+        if (isset($validated['email'])) $user->email = $validated['email'];
+        if (isset($validated['phone'])) $user->phone = $validated['phone'];
+        if (isset($validated['administrador'])) $user->administrador = $validated['administrador'];
+        
+        if (isset($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
 
-        // Devolvemos la respuesta en formato json
+        $user->save();
+
         return response()->json([
             'message' => 'Usuari actualitzat',
             'user' => $user
@@ -68,103 +60,14 @@ class UserController extends Controller
 
     public function destroy($id)
     {
-        // Obtenemos el usuario por id
         $user = User::find($id);
 
-        // Comprobamos que el usuario existe
         if (!$user) {
             return response()->json(['message' => 'Usuari no trobat'], 404);
         }
 
-        // Si el usuario tiene un perfil, lo eliminamos
-        if ($user->profile) {
-            $user->profile->delete();
-        }
-
-        // Eliminamos el usuario
         $user->delete();
 
-        // Devolvemos la respuesta en formato json
-        return response()->json(['message' => 'Usuari i perfil eliminats correctament'],200);
-    }
-
-    public function myProfile(Request $request)
-    {
-        // Obtenemos el usuario
-        $user = $request->user();
-
-        // Comprobamos que el usuario existe
-        if (!$user) {
-            return response()->json([
-                'message' => 'No autorizado'
-            ], 401);
-        }
-
-        // Cargamos el perfil seleccionado
-        $user->load('profile');
-
-        // Devolvemos los datos en formato json
-        return response()->json([
-            'message' => 'Perfil obtingut correctament',
-            'user' => $user
-        ], 200);
-    }
-
-    public function updateMyProfile(Request $request)
-    {
-        // Obtenemos el usuario por su id
-        $user = $request->user();
-
-        // Cogemos los datos del usuario
-        $userData = $request->input('user');
-
-        // Hacemos la validación de los datos
-        $data = validator($userData, [
-            'name' => 'required|string',
-            'email' => 'required|string',
-            'password' => 'required|string',
-            'administrador' => 'nullable|boolean',
-            'registration_date' =>'required|date'
-
-        ])->validate();
-
-        // Actualizamos los datos del usuario
-        $user->update([
-            'name' => $data['name'],
-            'password' => Hash::make($data['password']),
-            'email' => $data['email'],
-            'administrador' => $data['administrador'] ?? $user->administrador,
-        ]);
-
-        // Actualizamos los datos del perfil
-        if (isset($data['profile']['profile_img'])) {
-            $user->profile()->updateOrCreate(
-                ['id_user' => $user->id_user],
-                ['profile_img' => $data['profile']['profile_img']]
-            );
-        }
-
-        // Refrescamos los atributos del usuario
-        $user->refresh(); 
-
-        // Cargamos el perfil actualizado
-        $user->load('profile'); 
-
-        // Devolvemos la respuesta en formato json
-        return response()->json([
-            'message' => 'Perfil actualizat',
-            'user' => $user
-        ]);
-    }
-
-    public function mostrarMapa(Request $request)
-    {
-        // Obtenemos el usuario
-        $user = $request->user();
-
-        // Comprobamos que el usuario existe
-        if (!$user) {
-            return response()->json(['message' => 'No autorizado'], 401);
-        }
+        return response()->json(['message' => 'Usuari eliminat correctament'], 200);
     }
 }

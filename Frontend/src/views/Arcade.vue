@@ -215,7 +215,7 @@ const obtenerClaseMultiple = (intentoValor, secretoValor) => {
             <div v-if="mostrarModalPerdedor" class="modal-overlay"> 
                 <div class="modal-content" @click.stop>
                     <h2>GAME OVER</h2>
-                    <p style="margin-bottom: 20px; color: #cbd5e1;">Puntos conseguidos: {{ puntos_totales }}</p>
+                    <p>Puntos conseguidos: {{ puntos_totales }}</p>
                     <button class="btn-volver-inicio" @click="PartidaJugada">Ver estadísticas</button>
                 </div>
             </div>

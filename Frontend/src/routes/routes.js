@@ -8,6 +8,7 @@ import Register from '../views/Register.vue';
 import Estadisticas from '../views/Estadisticas.vue';
 import Perfil from '../views/Perfil.vue';
 import Arcade from '../views/Arcade.vue';
+import Ranking from '../views/Ranking.vue';
 
 const routes = [
   {
@@ -62,6 +63,12 @@ const routes = [
     path: '/arcade',          
     name: 'arcade',
     component: Arcade,
+    meta: { requiresAuth: true } // Ruta protegida
+  },
+  {
+    path: '/ranking',          
+    name: 'ranking',
+    component: Ranking,
     meta: { requiresAuth: true } // Ruta protegida
   },
 ]
