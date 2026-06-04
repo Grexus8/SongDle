@@ -13,7 +13,6 @@ class Song extends Model
         'titulo',
         'id_artista',
         'id_album',
-        'productor',
         'registration_date',
         'pais',
         'anio',

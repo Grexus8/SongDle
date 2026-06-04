@@ -14,7 +14,6 @@ public function up(): void
     Schema::create('songs', function (Blueprint $table) {
         $table->id('id_song');
         $table->string('titulo');
-        $table->string('productor')->nullable();
         $table->string('pais');
         $table->year('anio');
         $table->string('genero');

@@ -276,7 +276,6 @@ class SongSeeder extends Seeder
                     'titulo' => $s['t'],
                     'id_artista' => $artistId,
                     'id_album' => $albumId,
-                    'productor' => $s['p'],
                     'registration_date' => $randomDate,
                     'pais' => $artistCountry, // Usamos país del artista por defecto
                     'anio' => $s['y'],

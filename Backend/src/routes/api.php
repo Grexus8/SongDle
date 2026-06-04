@@ -13,6 +13,7 @@ use App\Http\Controllers\ArcadeController;
 Route::prefix('auth')->name('auth.')->group(function (){
     Route::post('/register', [AuthController::class, 'createUser'])->name('register');
     Route::post('/login', [AuthController::class, 'loginUser'])->name('login');
+    Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
 

@@ -1,8 +1,7 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import { RouterLink, useRouter } from 'vue-router';
-import { onMounted } from 'vue';
 
 const router = useRouter();
 const artistaFiltro = ref('');
@@ -14,10 +13,21 @@ const SeleccionarArcade = ref(false)
 const cancionClasico = ref(false)
 const cancionFiltrado = ref(false)
 const artistas = ref([])
-const userStorage = localStorage.getItem('user');
-const userId = userStorage ? JSON.parse(userStorage).id_usuario : null;
+
 const dropdownAbierto = ref(false);
 const artistaSeleccionadoNombre = ref('');
+
+// SACAMOS AL USUARIO DIRECTAMENTE DE FORMA SEGURA
+const userStorage = localStorage.getItem('user');
+const usuario = ref(userStorage ? JSON.parse(userStorage) : null);
+const userId = ref(usuario.value ? usuario.value.id_usuario : '');
+
+// COMPROBACIÓN ROBUSTA DE ADMINISTRADOR
+const esAdmin = computed(() => {
+    if (!usuario.value) return false;
+    const admin = usuario.value.administrador;
+    return admin === 1 || admin === '1' || admin === true;
+});
 
 const seleccionarArtista = (id, nombre) => {
   artistaFiltro.value = id;
@@ -25,29 +35,49 @@ const seleccionarArtista = (id, nombre) => {
   dropdownAbierto.value = false;
 }
 
-const opcionesArtistas = async  () => {
- const cargar = await axios.get('http://localhost:8080/api/artists');
-  artistas.value = cargar.data;
-  console.log(artistas.value)
+const opcionesArtistas = async () => {
+  try {
+    const cargar = await axios.get('http://localhost:8080/api/artists');
+    artistas.value = cargar.data;
+  } catch (error) {
+    console.error("Error al cargar los artistas:", error);
+  }
 }
 
 const JugarCancionFiltrada = () => {
   router.push({
-    name:'cancion',
-    params: {id:artistaFiltro.value}
+    name: 'cancion',
+    params: { id: artistaFiltro.value }
   })
 }
 
 const JugarCancionDificil = () => {
   router.push({
-      name:'cancion',
-      query: {Dificil:Dificil.value}
+      name: 'cancion',
+      query: { Dificil: Dificil.value }
   })
 }
 
+// FUNCION DE LOGOUT
+const cerrarSesion = async () => {
+    try {
+        const token = localStorage.getItem('token');
+        if (token) {
+            await axios.post('http://localhost:8080/api/auth/logout', {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        }
+    } catch (error) {
+        console.error("Error cerrando sesión en el servidor:", error);
+    } finally {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/login');
+    }
+}
 
 onMounted(() => {
-  opcionesArtistas()
+  opcionesArtistas();
 })
 </script>
 
@@ -62,7 +92,7 @@ onMounted(() => {
             <line x1="12" y1="20" x2="12" y2="4"></line>
             <line x1="6" y1="20" x2="6" y2="14"></line>
           </svg>
-          <RouterLink :to="{ name: 'estadisticas', params: { id: userId } }">
+          <RouterLink v-if="userId" :to="{ name: 'estadisticas', params: { id: userId } }">
               <span class="icon-text">ESTADÍSTICAS</span>
           </RouterLink>
         </div>
@@ -88,12 +118,34 @@ onMounted(() => {
       </div>
       
       <div class="header-right">
+        
+        <RouterLink v-if="esAdmin" to="/admin" class="btn-action-small" title="Panel de Administración">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+        </RouterLink>
+
         <div class="avatar-circle">
-          
-          <RouterLink :to="{ name: 'perfil', params: { id: userId } }">
-                <span class="avatar-icon">👤</span>
-            </RouterLink>
+          <RouterLink v-if="userId" :to="{ name: 'perfil', params: { id: userId } }" style="display: block; width: 100%; height: 100%;">
+                <img 
+                    v-if="usuario && usuario.profile_img" 
+                    :src="`http://localhost:8080/storage/${usuario.profile_img}`" 
+                    alt="Foto de perfil" 
+                    class="avatar-img"
+                >
+                <svg v-else xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="avatar-img default-avatar">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+          </RouterLink>
+          <div v-else style="display: block; width: 100%; height: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="avatar-img default-avatar">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+                </svg>
+          </div>
         </div>
+
+        <button @click="cerrarSesion" class="btn-action-small btn-logout" title="Cerrar sesión">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        </button>
+
       </div>
     </header>
 
@@ -102,28 +154,28 @@ onMounted(() => {
         
         <nav class="tabs-container">
           <button 
-            @click="Seleccionarcancion = true, Seleccionaralbum = false, Seleccionarartista = false, SeleccionarArcade = false" 
+            @click="Seleccionarcancion = true; Seleccionaralbum = false; Seleccionarartista = false; SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionarcancion }"
           >
             Canción
           </button>
           <button 
-            @click="Seleccionarcancion = false, Seleccionaralbum = false, Seleccionarartista = true, SeleccionarArcade = false" 
+            @click="Seleccionarcancion = false; Seleccionaralbum = false; Seleccionarartista = true; SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionarartista }"
           >
             Artista
           </button>
           <button 
-            @click="Seleccionaralbum = true, Seleccionarartista = false, Seleccionarcancion = false, SeleccionarArcade = false" 
+            @click="Seleccionaralbum = true; Seleccionarartista = false; Seleccionarcancion = false; SeleccionarArcade = false" 
             class="tab-btn" 
             :class="{ active: Seleccionaralbum }"
           >
             Álbum
           </button>
           <button 
-            @click="Seleccionaralbum = false, Seleccionarartista = false, Seleccionarcancion = false, SeleccionarArcade = true" 
+            @click="Seleccionaralbum = false; Seleccionarartista = false; Seleccionarcancion = false; SeleccionarArcade = true" 
             class="tab-btn" 
             :class="{ active: SeleccionarArcade }"
           >
@@ -143,7 +195,7 @@ onMounted(() => {
             <div class="modes-layout">
               <div class="column-left">
                 <button 
-                  @click="cancionClasico = true, cancionFiltrado = false, Dificil = false" 
+                  @click="cancionClasico = true; cancionFiltrado = false; Dificil = false" 
                   class="mode-btn-outline"
                   :class="{ selected: cancionClasico }"
                 >JUEGO CLÁSICO
@@ -156,7 +208,7 @@ onMounted(() => {
                     <span class="dificultad-texto">Activar Modo Difícil</span>
                   </div>  
                 <button 
-                  @click="cancionClasico = false, cancionFiltrado = true"
+                  @click="cancionClasico = false; cancionFiltrado = true"
                   class="mode-btn-outline"
                   :class="{ selected: cancionFiltrado }"
                 >MODO ARTISTA
@@ -187,6 +239,7 @@ onMounted(() => {
                 <button v-if="cancionClasico || cancionFiltrado" @click="cancionClasico ? JugarCancionDificil() : JugarCancionFiltrada()" class="play-btn-gradient">¡A JUGAR CANCIÓN!</button>
             </div>
           </div>
+          
           <div v-if="Seleccionarartista" class="step-animation">
             <p class="step-title">Paso 2: Elige el Modo de Juego</p>
             <div class="single-mode-wrapper">
@@ -254,7 +307,41 @@ onMounted(() => {
 .header-left, .header-right { flex: 1; }
 .header-left { display: flex; gap: 1rem; }
 .header-center { flex: 2; text-align: center; }
-.header-right { display: flex; justify-content: flex-end; }
+
+/* ESTILOS HEADER RIGHT */
+.header-right { 
+  display: flex; 
+  justify-content: flex-end; 
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-action-small {
+  background-color: #11141d;
+  border: 1px solid #334155;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.btn-action-small:hover {
+  color: #d8b4fe;
+  border-color: #d8b4fe;
+  background-color: rgba(216, 180, 254, 0.1);
+}
+
+.btn-logout:hover {
+  color: #f87171;
+  border-color: #f87171;
+  background-color: rgba(248, 113, 113, 0.1);
+}
 
 .icon-group {
   display: flex;
@@ -319,9 +406,24 @@ onMounted(() => {
   background-color: #1e293b;
   cursor: pointer;
   transition: border-color 0.2s;
+  overflow: hidden; 
 }
 
 .avatar-circle:hover { border-color: #8b5cf6; }
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; 
+  display: block;
+}
+
+/* ESTILO DEL AVATAR POR DEFECTO (SVG) */
+.default-avatar {
+  fill: #94a3b8; 
+  background-color: #1e293b;
+  transform: scale(1.1);
+}
 
 .config-card {
   width: 100%;

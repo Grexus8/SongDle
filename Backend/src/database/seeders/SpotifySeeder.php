@@ -121,9 +121,7 @@ class SpotifySeeder extends Seeder
     ];
 
     // ── Config ────────────────────────────────────────────────────
-    private int $maxTracksPerAlbum  = 100; // máx canciones por álbum
-    private int $maxTracksPerArtist = 15; // máx canciones totales por artista
-    private int $minTracksPerAlbum  = 5;   // álbumes con menos canciones se descartan
+    private int $minTracksPerAlbum  = 2;   // álbumes con menos canciones se descartan
 
     // ─────────────────────────────────────────────────────────────
 
@@ -201,7 +199,6 @@ class SpotifySeeder extends Seeder
         $totalSongsInserted = 0;
 
         foreach ($selected as $release) {
-            if ($totalSongsInserted >= $this->maxTracksPerArtist) break;
             if (empty($release['id'])) continue;
 
             $releaseDetail = $this->getRelease($release['id']);
@@ -221,8 +218,7 @@ class SpotifySeeder extends Seeder
 
             $inserted = $this->insertTracks(
                 $releaseDetail, $artistDbId, $albumDbId,
-                $country, $genre,
-                $this->maxTracksPerArtist - $totalSongsInserted
+                $country, $genre
             );
             $totalSongsInserted += $inserted;
         }
@@ -365,13 +361,30 @@ class SpotifySeeder extends Seeder
             $total += count($medium['tracks'] ?? []);
         }
 
+        // Detectar colaboraciones: MusicBrainz usa 'joinphrase' con 'feat.' entre artistas
+        $artistCredits = $d['artist-credit'] ?? [];
+        $colaboraciones = false;
+        foreach ($artistCredits as $credit) {
+            $join = strtolower($credit['joinphrase'] ?? '');
+            if (str_contains($join, 'feat') || str_contains($join, 'ft.') || str_contains($join, '&')) {
+                $colaboraciones = true;
+                break;
+            }
+        }
+        // También si hay más de 1 artista real (excluyendo joinphrases vacíos)
+        $realArtists = array_filter($artistCredits, fn($c) => isset($c['artist']));
+        if (count($realArtists) > 1) $colaboraciones = true;
+
+        // Reproducciones hardcodeadas por popularidad aproximada
+        $reproducciones = rand(1_000_000, 500_000_000);
+
         $id = DB::table('albums')->insertGetId([
             'nombre'             => $nombre,
             'fecha_lanzamiento'  => $fecha,
             'cantidad_canciones' => $total,
-            'colaboraciones'     => count($d['artist-credit'] ?? []) > 1,
+            'colaboraciones'     => $colaboraciones,
             'premios'            => null,
-            'reproducciones'     => 0,
+            'reproducciones'     => $reproducciones,
             'id_artista'         => $artistId,
         ]);
 
@@ -388,20 +401,17 @@ class SpotifySeeder extends Seeder
         return $id;
     }
 
-    private function insertTracks(array $album, int $artistId, int $albumId, string $country, string $genre, int $remaining = 100): int
+    private function insertTracks(array $album, int $artistId, int $albumId, string $country, string $genre): int
     {
         $date  = $album['date'] ?? null;
         $year  = $this->extractYear($date);
         $fecha = $this->parseDate($date);
 
-        $limit = min($this->maxTracksPerAlbum, $remaining);
         $rows  = [];
         $count = 0;
 
         foreach (($album['media'] ?? []) as $medium) {
             foreach (($medium['tracks'] ?? []) as $track) {
-                if ($count >= $limit) break 2;
-
                 $titulo = $track['title'] ?? ($track['recording']['title'] ?? null);
                 if (!$titulo) continue;
 
@@ -411,7 +421,6 @@ class SpotifySeeder extends Seeder
 
                 $rows[] = [
                     'titulo'            => $titulo,
-                    'productor'         => null,
                     'pais'              => $country,
                     'anio'              => $year,
                     'genero'            => $genre,
@@ -426,7 +435,7 @@ class SpotifySeeder extends Seeder
 
         if (!empty($rows)) DB::table('songs')->insert($rows);
 
-        return count($rows); // devuelve cuántas canciones se insertaron realmente
+        return count($rows);
     }
 
     // ─────────────────────────────────────────────────────────────
