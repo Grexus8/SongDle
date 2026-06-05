@@ -17,10 +17,17 @@ const busquedaArtista = ref('');
 const busquedaAlbum = ref('');
 const busquedaCancion = ref('');
 
-const newArtist = ref({ nombre: '', pais: '', genero: '', debut: '', cantidad_albumes: null, premios: '', oyentes_mensuales: null });
-const newAlbum = ref({ nombre: '', id_artista: '', fecha_lanzamiento: '', cantidad_canciones: null, colaboraciones: false, premios: '', reproducciones: null });
-const newSong = ref({ titulo: '', id_artista: '', id_album: '', registration_date: '', pais: '', anio: '', genero: '', reproducciones: null });
+// ── Paginación ────────────────────────────────────────────────
+const POR_PAGINA = 30;
+const paginaArtistas  = ref(1);
+const paginaAlbumes   = ref(1);
+const paginaCanciones = ref(1);
 
+const newArtist = ref({ nombre: '', pais: '', genero: '', debut: '', cantidad_albumes: null, premios: '', oyentes_mensuales: null });
+const newAlbum  = ref({ nombre: '', id_artista: '', fecha_lanzamiento: '', cantidad_canciones: null, colaboraciones: false, premios: '', reproducciones: null });
+const newSong   = ref({ titulo: '', id_artista: '', id_album: '', registration_date: '', pais: '', anio: '', genero: '', reproducciones: null });
+
+// ── Filtrado ──────────────────────────────────────────────────
 const artistasFiltrados = computed(() => {
     if (!busquedaArtista.value.trim()) return artistas.value;
     const q = busquedaArtista.value.toLowerCase();
@@ -42,27 +49,54 @@ const cancionesFiltradas = computed(() => {
     });
 });
 
+// ── Paginado (resetea página al buscar) ───────────────────────
+const artistasPaginados = computed(() => {
+    const start = (paginaArtistas.value - 1) * POR_PAGINA;
+    return artistasFiltrados.value.slice(start, start + POR_PAGINA);
+});
+
+const albumesPaginados = computed(() => {
+    const start = (paginaAlbumes.value - 1) * POR_PAGINA;
+    return albumesFiltrados.value.slice(start, start + POR_PAGINA);
+});
+
+const cancionesPaginadas = computed(() => {
+    const start = (paginaCanciones.value - 1) * POR_PAGINA;
+    return cancionesFiltradas.value.slice(start, start + POR_PAGINA);
+});
+
+const totalPaginasArtistas  = computed(() => Math.ceil(artistasFiltrados.value.length / POR_PAGINA));
+const totalPaginasAlbumes   = computed(() => Math.ceil(albumesFiltrados.value.length / POR_PAGINA));
+const totalPaginasCanciones = computed(() => Math.ceil(cancionesFiltradas.value.length / POR_PAGINA));
+
+// Resetear página al buscar
+const onBusquedaArtista  = () => { paginaArtistas.value  = 1; };
+const onBusquedaAlbum    = () => { paginaAlbumes.value   = 1; };
+const onBusquedaCancion  = () => { paginaCanciones.value = 1; };
+
+// ── Datos ─────────────────────────────────────────────────────
 const cargarDatos = async () => {
     try {
-        const resArtistas = await axios.get('http://localhost:8080/api/artists', { headers: { Authorization: `Bearer ${token}` } });
-        artistas.value = resArtistas.data;
-
-        const resAlbumes = await axios.get('http://localhost:8080/api/albums', { headers: { Authorization: `Bearer ${token}` } });
-        albumes.value = resAlbumes.data;
-
-        const resCanciones = await axios.get('http://localhost:8080/api/songs', { headers: { Authorization: `Bearer ${token}` } });
-        canciones.value = resCanciones.data;
+        const [resA, resAl, resC] = await Promise.all([
+            axios.get('http://localhost:8080/api/artists',  { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get('http://localhost:8080/api/albums',   { headers: { Authorization: `Bearer ${token}` } }),
+            axios.get('http://localhost:8080/api/songs',    { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+        artistas.value  = resA.data;
+        albumes.value   = resAl.data;
+        canciones.value = resC.data;
     } catch (error) {
         console.error("Error cargando datos:", error);
     }
 };
 
+// ── CRUD ──────────────────────────────────────────────────────
 const crearArtista = async () => {
     mensajeError.value = ''; mensajeExito.value = '';
     try {
         await axios.post('http://localhost:8080/api/artists', newArtist.value, { headers: { Authorization: `Bearer ${token}` } });
         mensajeExito.value = "Artista añadido correctamente.";
-        newArtist.value = { nombre: '', pais: '', genero: '', debut: '', cantidad_albumes: 0, premios: '', oyentes_mensuales: 0 };
+        newArtist.value = { nombre: '', pais: '', genero: '', debut: '', cantidad_albumes: null, premios: '', oyentes_mensuales: null };
         cargarDatos();
     } catch { mensajeError.value = "Error al guardar el artista."; }
 };
@@ -81,7 +115,7 @@ const crearAlbum = async () => {
     try {
         await axios.post('http://localhost:8080/api/albums', newAlbum.value, { headers: { Authorization: `Bearer ${token}` } });
         mensajeExito.value = "Álbum añadido correctamente.";
-        newAlbum.value = { nombre: '', id_artista: '', fecha_lanzamiento: '', cantidad_canciones: 0, colaboraciones: false, premios: '', reproducciones: 0 };
+        newAlbum.value = { nombre: '', id_artista: '', fecha_lanzamiento: '', cantidad_canciones: null, colaboraciones: false, premios: '', reproducciones: null };
         cargarDatos();
     } catch { mensajeError.value = "Error al guardar el álbum."; }
 };
@@ -151,20 +185,26 @@ onMounted(() => cargarDatos());
                 <form @submit.prevent="crearArtista" class="formulario-admin">
                     <h2 class="titulo-form">Añadir Artista</h2>
                     <div class="grid-form">
-                        <input type="text" v-model="newArtist.nombre" placeholder="Nombre del artista" class="input-buscador" required>
-                        <input type="text" v-model="newArtist.pais" placeholder="País" class="input-buscador" required>
-                        <input type="text" v-model="newArtist.genero" placeholder="Género" class="input-buscador" required>
-                        <input type="number" v-model="newArtist.debut" placeholder="Año de debut" class="input-buscador" required>
-                        <input type="number" v-model="newArtist.cantidad_albumes" placeholder="Cantidad de álbumes" class="input-buscador" required>
-                        <input type="number" v-model="newArtist.oyentes_mensuales" placeholder="Oyentes mensuales" class="input-buscador" required>
-                        <input type="text" v-model="newArtist.premios" placeholder="Premios (opcional)" class="input-buscador grid-span-2">
+                        <input type="text"   v-model="newArtist.nombre"           placeholder="Nombre del artista"    class="input-buscador" required>
+                        <input type="text"   v-model="newArtist.pais"             placeholder="País"                  class="input-buscador" required>
+                        <input type="text"   v-model="newArtist.genero"           placeholder="Género"                class="input-buscador" required>
+                        <input type="number" v-model="newArtist.debut"            placeholder="Año de debut"          class="input-buscador" required>
+                        <input type="number" v-model="newArtist.cantidad_albumes" placeholder="Cantidad de álbumes"   class="input-buscador" required>
+                        <input type="number" v-model="newArtist.oyentes_mensuales" placeholder="Oyentes mensuales"   class="input-buscador" required>
+                        <input type="text"   v-model="newArtist.premios"          placeholder="Premios (opcional)"    class="input-buscador grid-span-2">
                     </div>
                     <button type="submit" class="play-btn-gradient">GUARDAR ARTISTA</button>
                 </form>
 
-                <input v-model="busquedaArtista" type="text" placeholder="🔍 Buscar artista..." class="input-buscador buscador-lista">
+                <input v-model="busquedaArtista" @input="onBusquedaArtista" type="text"
+                    placeholder="🔍 Buscar artista..." class="input-buscador buscador-lista">
 
-                <div v-for="artista in artistasFiltrados" :key="artista.id_artista" class="fila-comparacion">
+                <!-- Info paginación -->
+                <div class="paginacion-info">
+                    Mostrando {{ artistasPaginados.length }} de {{ artistasFiltrados.length }} artistas
+                </div>
+
+                <div v-for="artista in artistasPaginados" :key="artista.id_artista" class="fila-comparacion">
                     <div class="caja-dato acierto">
                         <small>Nombre</small>
                         <span>{{ artista.nombre }}</span>
@@ -178,6 +218,21 @@ onMounted(() => cargarDatos());
                         <button @click="eliminarArtista(artista.id_artista)" class="btn-eliminar">ELIMINAR</button>
                     </div>
                 </div>
+
+                <!-- Paginación artistas -->
+                <div class="paginacion" v-if="totalPaginasArtistas > 1">
+                    <button class="btn-pagina" :disabled="paginaArtistas === 1" @click="paginaArtistas--">‹</button>
+                    <template v-for="p in totalPaginasArtistas" :key="p">
+                        <button
+                            v-if="p === 1 || p === totalPaginasArtistas || Math.abs(p - paginaArtistas) <= 2"
+                            class="btn-pagina"
+                            :class="{ 'btn-pagina-activa': p === paginaArtistas }"
+                            @click="paginaArtistas = p"
+                        >{{ p }}</button>
+                        <span v-else-if="Math.abs(p - paginaArtistas) === 3" class="puntos">…</span>
+                    </template>
+                    <button class="btn-pagina" :disabled="paginaArtistas === totalPaginasArtistas" @click="paginaArtistas++">›</button>
+                </div>
             </div>
 
             <!-- ÁLBUMES -->
@@ -189,11 +244,11 @@ onMounted(() => cargarDatos());
                             <option value="" disabled>Selecciona un artista...</option>
                             <option v-for="a in artistas" :key="a.id_artista" :value="a.id_artista">{{ a.nombre }}</option>
                         </select>
-                        <input type="text" v-model="newAlbum.nombre" placeholder="Nombre del álbum" class="input-buscador" required>
-                        <input type="date" v-model="newAlbum.fecha_lanzamiento" class="input-buscador">
+                        <input type="text"   v-model="newAlbum.nombre"            placeholder="Nombre del álbum"  class="input-buscador" required>
+                        <input type="date"   v-model="newAlbum.fecha_lanzamiento"                                 class="input-buscador">
                         <input type="number" v-model="newAlbum.cantidad_canciones" placeholder="Cant. Canciones" class="input-buscador">
-                        <input type="number" v-model="newAlbum.reproducciones" placeholder="Reproducciones" class="input-buscador">
-                        <input type="text" v-model="newAlbum.premios" placeholder="Premios" class="input-buscador">
+                        <input type="number" v-model="newAlbum.reproducciones"    placeholder="Reproducciones"   class="input-buscador">
+                        <input type="text"   v-model="newAlbum.premios"           placeholder="Premios"          class="input-buscador">
                         <label class="toggle-switch-wrapper">
                             <span class="dificultad-texto">Colaboraciones</span>
                             <div class="toggle-switch">
@@ -205,9 +260,14 @@ onMounted(() => cargarDatos());
                     <button type="submit" class="play-btn-gradient">GUARDAR ÁLBUM</button>
                 </form>
 
-                <input v-model="busquedaAlbum" type="text" placeholder="🔍 Buscar álbum..." class="input-buscador buscador-lista">
+                <input v-model="busquedaAlbum" @input="onBusquedaAlbum" type="text"
+                    placeholder="🔍 Buscar álbum..." class="input-buscador buscador-lista">
 
-                <div v-for="album in albumesFiltrados" :key="album.id_album" class="fila-comparacion">
+                <div class="paginacion-info">
+                    Mostrando {{ albumesPaginados.length }} de {{ albumesFiltrados.length }} álbumes
+                </div>
+
+                <div v-for="album in albumesPaginados" :key="album.id_album" class="fila-comparacion">
                     <div class="caja-dato acierto">
                         <small>Álbum</small>
                         <span>{{ album.nombre }}</span>
@@ -220,6 +280,21 @@ onMounted(() => cargarDatos());
                         <small>Acción</small>
                         <button @click="eliminarAlbum(album.id_album)" class="btn-eliminar">ELIMINAR</button>
                     </div>
+                </div>
+
+                <!-- Paginación álbumes -->
+                <div class="paginacion" v-if="totalPaginasAlbumes > 1">
+                    <button class="btn-pagina" :disabled="paginaAlbumes === 1" @click="paginaAlbumes--">‹</button>
+                    <template v-for="p in totalPaginasAlbumes" :key="p">
+                        <button
+                            v-if="p === 1 || p === totalPaginasAlbumes || Math.abs(p - paginaAlbumes) <= 2"
+                            class="btn-pagina"
+                            :class="{ 'btn-pagina-activa': p === paginaAlbumes }"
+                            @click="paginaAlbumes = p"
+                        >{{ p }}</button>
+                        <span v-else-if="Math.abs(p - paginaAlbumes) === 3" class="puntos">…</span>
+                    </template>
+                    <button class="btn-pagina" :disabled="paginaAlbumes === totalPaginasAlbumes" @click="paginaAlbumes++">›</button>
                 </div>
             </div>
 
@@ -239,18 +314,23 @@ onMounted(() => cargarDatos());
                                 {{ al.nombre }}
                             </option>
                         </select>
-                        <input type="text" v-model="newSong.genero" placeholder="Género" class="input-buscador">
-                        <input type="text" v-model="newSong.pais" placeholder="País" class="input-buscador">
-                        <input type="number" v-model="newSong.anio" placeholder="Año" class="input-buscador">
-                        <input type="number" v-model="newSong.reproducciones" placeholder="Reproducciones" class="input-buscador">
-                        <input type="date" v-model="newSong.registration_date" class="input-buscador">
+                        <input type="text"   v-model="newSong.genero"           placeholder="Género"          class="input-buscador">
+                        <input type="text"   v-model="newSong.pais"             placeholder="País"            class="input-buscador">
+                        <input type="number" v-model="newSong.anio"             placeholder="Año"             class="input-buscador">
+                        <input type="number" v-model="newSong.reproducciones"   placeholder="Reproducciones"  class="input-buscador">
+                        <input type="date"   v-model="newSong.registration_date"                              class="input-buscador">
                     </div>
                     <button type="submit" class="play-btn-gradient">GUARDAR CANCIÓN</button>
                 </form>
 
-                <input v-model="busquedaCancion" type="text" placeholder="🔍 Buscar canción por título o artista..." class="input-buscador buscador-lista">
+                <input v-model="busquedaCancion" @input="onBusquedaCancion" type="text"
+                    placeholder="🔍 Buscar canción por título o artista..." class="input-buscador buscador-lista">
 
-                <div v-for="cancion in cancionesFiltradas" :key="cancion.id_song" class="fila-comparacion">
+                <div class="paginacion-info">
+                    Mostrando {{ cancionesPaginadas.length }} de {{ cancionesFiltradas.length }} canciones
+                </div>
+
+                <div v-for="cancion in cancionesPaginadas" :key="cancion.id_song" class="fila-comparacion">
                     <div class="caja-dato acierto">
                         <small>Título</small>
                         <span>{{ cancion.titulo }}</span>
@@ -263,6 +343,21 @@ onMounted(() => cargarDatos());
                         <small>Acción</small>
                         <button @click="eliminarCancion(cancion.id_song)" class="btn-eliminar">ELIMINAR</button>
                     </div>
+                </div>
+
+                <!-- Paginación canciones -->
+                <div class="paginacion" v-if="totalPaginasCanciones > 1">
+                    <button class="btn-pagina" :disabled="paginaCanciones === 1" @click="paginaCanciones--">‹</button>
+                    <template v-for="p in totalPaginasCanciones" :key="p">
+                        <button
+                            v-if="p === 1 || p === totalPaginasCanciones || Math.abs(p - paginaCanciones) <= 2"
+                            class="btn-pagina"
+                            :class="{ 'btn-pagina-activa': p === paginaCanciones }"
+                            @click="paginaCanciones = p"
+                        >{{ p }}</button>
+                        <span v-else-if="Math.abs(p - paginaCanciones) === 3" class="puntos">…</span>
+                    </template>
+                    <button class="btn-pagina" :disabled="paginaCanciones === totalPaginasCanciones" @click="paginaCanciones++">›</button>
                 </div>
             </div>
 
@@ -357,9 +452,7 @@ h1 {
     transition: background-color 0.3s ease;
 }
 
-.stat:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-}
+.stat:hover { background-color: rgba(255, 255, 255, 0.05); }
 
 .tab-activa {
     background-color: rgba(168, 85, 247, 0.1) !important;
@@ -409,9 +502,7 @@ h1 {
     margin-bottom: 20px;
 }
 
-.grid-span-2 {
-    grid-column: 1 / -1;
-}
+.grid-span-2 { grid-column: 1 / -1; }
 
 .input-buscador {
     width: 100%;
@@ -424,6 +515,7 @@ h1 {
     font-size: 1rem;
     outline: none;
     transition: all 0.3s ease;
+    box-sizing: border-box;
 }
 
 .input-buscador:focus {
@@ -431,9 +523,7 @@ h1 {
     box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.15);
 }
 
-.input-buscador::placeholder {
-    color: #64748b;
-}
+.input-buscador::placeholder { color: #64748b; }
 
 .toggle-switch-wrapper {
     display: flex;
@@ -453,11 +543,7 @@ h1 {
     height: 26px;
 }
 
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
 
 .slider {
     position: absolute;
@@ -485,9 +571,7 @@ input:checked + .slider {
     box-shadow: 0 0 10px rgba(236, 72, 153, 0.4);
 }
 
-input:checked + .slider:before {
-    transform: translateX(24px);
-}
+input:checked + .slider:before { transform: translateX(24px); }
 
 .dificultad-texto {
     color: #f8fafc;
@@ -516,9 +600,7 @@ input:checked + .slider:before {
     box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.6);
 }
 
-.play-btn-gradient:active {
-    transform: translateY(1px);
-}
+.play-btn-gradient:active { transform: translateY(1px); }
 
 .btn-eliminar {
     background-color: rgba(239, 68, 68, 0.1);
@@ -565,11 +647,10 @@ input:checked + .slider:before {
     background-color: #11141d;
     border: 1px solid #334155;
     transition: transform 0.2s ease;
+    word-break: break-word;
 }
 
-.caja-dato:hover {
-    transform: translateY(-2px);
-}
+.caja-dato:hover { transform: translateY(-2px); }
 
 .caja-dato small {
     font-weight: 600;
@@ -586,9 +667,7 @@ input:checked + .slider:before {
     color: #d8b4fe;
 }
 
-.acierto small {
-    color: rgba(216, 180, 254, 0.8);
-}
+.acierto small { color: rgba(216, 180, 254, 0.8); }
 
 .no-results {
     text-align: center;
@@ -597,19 +676,13 @@ input:checked + .slider:before {
     margin-bottom: 20px;
 }
 
-.error-texto {
-    color: #ef4444;
-}
+.error-texto  { color: #ef4444; }
+.exito-texto  { color: #4ade80; }
 
-.exito-texto {
-    color: #4ade80;
-}
+.fade-in { animation: fadeIn 0.3s ease-in-out; }
 
-.fade-in {
-    animation: fadeIn 0.3s ease-in-out;
-}
 .buscador-lista {
-    margin-bottom: 1.2rem;
+    margin-bottom: 0.8rem;
     width: 100%;
     display: block;
 }
@@ -618,13 +691,70 @@ input:checked + .slider:before {
     max-width: 140px;
     flex: 0 0 140px;
 }
+
+/* ── Paginación ───────────────────────────────── */
+.paginacion-info {
+    font-size: 0.8rem;
+    color: #64748b;
+    text-align: right;
+    margin-bottom: 0.8rem;
+}
+
+.paginacion {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-pagina {
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    background-color: #11141d;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-pagina:hover:not(:disabled) {
+    border-color: #a855f7;
+    color: #d8b4fe;
+    background-color: rgba(168, 85, 247, 0.1);
+}
+
+.btn-pagina:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.btn-pagina-activa {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899) !important;
+    border-color: transparent !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.puntos {
+    color: #475569;
+    font-size: 0.9rem;
+    padding: 0 4px;
+}
+
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 </style>
